@@ -1,3 +1,3 @@
-# SwerveCode
+# AMES2024
 
-Source code for CTRE swerve containing TalonFX motors, CANCoders, Pigeon2, and CANivore (optional) developed by FRC Team 3006. Includes option for `FieldCentricFacingAngle` , also known as Heading PID, as well as SmartDashboard logging.
+Source code of FRC Team 3006 for the 2024 AMES Competition: Soar and Score (Score and Score?)
