@@ -12,6 +12,7 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils3006.SmartDashboardNumber;
@@ -96,7 +97,7 @@ public class Shooter extends SubsystemBase{
     }
 
     public void setHoodAngle(double angle) {
-        this.m_hoodMotor.setControl(new PositionVoltage(this.angleToRotation(angle))
+        this.m_hoodMotor.setControl(new PositionVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinHoodRotation, kMaxHoodRotation))
                                         .withSlot(0)
                                         .withEnableFOC(true)
                                         .withOverrideBrakeDurNeutral(true)
@@ -122,7 +123,7 @@ public class Shooter extends SubsystemBase{
         this.m_hoodMotor.setPosition(0d);
     }
 
-    public double angleToRotation(double angle) {
+    private double angleToRotation(double angle) {
         return ((kMaxHoodRotation - kMinHoodRotation) / (kMaxHoodAngle - kMinHoodAngle)) * (angle - kMinHoodAngle) + kMinHoodRotation;
     }
 
