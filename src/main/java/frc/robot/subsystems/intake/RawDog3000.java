@@ -11,6 +11,8 @@ public class RawDog3000 extends SubsystemBase {
 
     private final TalonFX m_slapLeft = new TalonFX(0); // change motor ID
     private final TalonFX m_slapRight = new TalonFX(0); // change motor ID
+    private final TalonFX m_intake = new TalonFX(0); // change motor ID
+    private double target;
 
     private RawDog3000() {
         super("RawDog3000");
@@ -18,18 +20,26 @@ public class RawDog3000 extends SubsystemBase {
         
     }
 
-    private void initSlapUp() {
-        double spikeThreshold = 320.0;
-
-        while (this.m_slapLeft.getSupplyCurrent().getValue() < spikeThreshold && this.m_slapRight.getSupplyCurrent().getValue() < spikeThreshold) {
-            // change based on testing
-            this.m_slapLeft.set(-100000);
-            this.m_slapRight.set(-100000);
-        }
+    public void setInitialStowSpeed() {
+        setPivotMotorSpeeds(1000000); // change this hawk tuah
     }
 
-    public void slapUp() {
-        // m_slapLeft.
+    public void setInitialDeploySpeed() {
+        setPivotMotorSpeeds(-1000000); // change this hawk tuah
+    }
+
+    public void setIntakeSpeed(double speed) {}
+
+    public void enableIntake() {}
+
+    public void disableIntake() {}
+
+    public void setTarget(double target) {}
+
+    public void setPivotMotorSpeeds(double speed) {}
+
+    public boolean atCurrentSpike() {
+        return false;
     }
 
     public static RawDog3000 getInstance() {
