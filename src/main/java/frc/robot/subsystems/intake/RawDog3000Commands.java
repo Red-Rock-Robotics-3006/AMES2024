@@ -10,20 +10,20 @@ public class RawDog3000Commands {
 
     public static Command stowIntake() {
         return new FunctionalCommand(
-            () -> intake.setInitialStowSpeed(), // chang,
+            () -> intake.startStow(), // chang,
             () -> {},
             (interrupted) -> intake.setPivotMotorSpeeds(0),
-            () -> intake.atCurrentSpike(),
+            () -> intake.atCurrentSpike() || intake.stowed(),
             intake
         ).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
     }
 
     public static Command deployIntake() {
         return new FunctionalCommand(
-            () -> intake.setInitialDeploySpeed(), // chang,
+            () -> intake.startDeploy(), // chang,
             () -> {},
             (interrupted) -> intake.setPivotMotorSpeeds(0),
-            () -> intake.atCurrentSpike(),
+            () -> intake.atCurrentSpike() || intake.deployed(),
             intake
         ).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
     }
