@@ -13,8 +13,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils3006.SmartDashboardNumber;
 
-public class RawDog3000 extends SubsystemBase {
-    private static RawDog3000 instance = null;
+public class Intake extends SubsystemBase {
+    private static Intake instance = null;
 
     private final TalonFX m_slapLeft = new TalonFX(0); // change motor ID
     private final TalonFX m_slapRight = new TalonFX(0); // change motor ID
@@ -40,8 +40,8 @@ public class RawDog3000 extends SubsystemBase {
     private SmartDashboardNumber pivotKi = new SmartDashboardNumber("pivot/ki", 0);
     private SmartDashboardNumber pivotKd = new SmartDashboardNumber("pivot/kd", 0);
 
-    private RawDog3000() {
-        super("RawDog3000");
+    private Intake() {
+        super("Intake");
 
         this.m_slapRight.getConfigurator().apply(
                 new MotorOutputConfigs()
@@ -144,9 +144,9 @@ public class RawDog3000 extends SubsystemBase {
         return m_slapLeft.getPosition().getValue() == deployPosition && m_slapRight.getPosition().getValue() == deployPosition;
     }
 
-    public static RawDog3000 getInstance() {
-        if (RawDog3000.instance == null)
-            RawDog3000.instance = new RawDog3000();
-        return RawDog3000.instance;
+    public static Intake getInstance() {
+        if (Intake.instance == null)
+            Intake.instance = new Intake();
+        return Intake.instance;
     }
 }
