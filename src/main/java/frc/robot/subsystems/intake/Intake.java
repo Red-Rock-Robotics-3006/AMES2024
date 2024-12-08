@@ -5,6 +5,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -88,13 +89,13 @@ public class Intake extends SubsystemBase {
 
     public void startStow() {
         this.m_slapRight.setControl(
-            new PositionVoltage(0) // fix
+            new MotionMagicVoltage(0) // fix
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(false)
         );
         this.m_slapLeft.setControl(
-            new PositionVoltage(0) // fix
+            new MotionMagicVoltage(0) // fix
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(false)
@@ -103,13 +104,13 @@ public class Intake extends SubsystemBase {
 
     public void startDeploy() {
         this.m_slapRight.setControl(
-            new PositionVoltage(10000) // fix
+            new MotionMagicVoltage(10000) // fix
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(false)
         );
         this.m_slapLeft.setControl(
-            new PositionVoltage(10000) // fix
+            new MotionMagicVoltage(10000) // fix
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(false)
