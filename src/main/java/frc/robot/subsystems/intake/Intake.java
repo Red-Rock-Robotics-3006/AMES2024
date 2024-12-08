@@ -25,6 +25,7 @@ public class Intake extends SubsystemBase {
 
     private double stowPosition;
     private double deployPosition;
+    private double tolerance = 10000; // fix
 
     private SmartDashboardNumber intakeKs = new SmartDashboardNumber("intake/ks", 0);
     private SmartDashboardNumber intakeKa = new SmartDashboardNumber("intake/ka", 0);
@@ -137,11 +138,11 @@ public class Intake extends SubsystemBase {
     }
 
     public boolean stowed() {
-        return m_slapLeft.getPosition().getValue() == stowPosition && m_slapRight.getPosition().getValue() == stowPosition;
+        return Math.abs(m_slapLeft.getPosition().getValue() - stowPosition) < tolerance && Math.abs(m_slapRight.getPosition().getValue() - stowPosition) < tolerance;
     }
 
     public boolean deployed() {
-        return m_slapLeft.getPosition().getValue() == deployPosition && m_slapRight.getPosition().getValue() == deployPosition;
+        return Math.abs(m_slapLeft.getPosition().getValue() - deployPosition) < tolerance && Math.abs(m_slapRight.getPosition().getValue() - deployPosition) < tolerance;
     }
 
     public static Intake getInstance() {
