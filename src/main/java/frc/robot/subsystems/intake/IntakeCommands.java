@@ -5,8 +5,8 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
-public class RawDog3000Commands {
-    private static RawDog3000 intake = RawDog3000.getInstance();
+public class IntakeCommands {
+    private static Intake intake = Intake.getInstance();
 
     public static Command stowIntake() {
         return new FunctionalCommand(
