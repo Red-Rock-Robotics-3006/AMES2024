@@ -52,8 +52,13 @@ public class Turret extends SubsystemBase{
     private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("turret/spike-threshold", 0);
     private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("turret/normalize-reset-speed", 0.1);
 
+    private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("turret/pid-Tolerance", 0.1);
+    private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("turret/position-tolerance", 0.1);
+
     private boolean autoAimEnabled = false;
     private DriverStation.Alliance alliance;
+
+    private double nonClampedTargetRevolution;
 
     private Turret() {
         super("turret");
@@ -91,6 +96,7 @@ public class Turret extends SubsystemBase{
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(true)
         );
+        this.nonClampedTargetRevolution = this.angleToRotation(angle);
     }
 
     public void reset() {
@@ -114,6 +120,11 @@ public class Turret extends SubsystemBase{
 
     public boolean inSpikeCurrent() {
         return this.m_turretMotor.getTorqueCurrent().getValueAsDouble() > this.spikeThreshold.getNumber();
+    }
+
+    public boolean isReady() {
+        return Math.abs(this.m_turretMotor.getClosedLoopError().getValueAsDouble()) < this.pidTolerance.getNumber() && 
+            Math.abs(this.m_turretMotor.getClosedLoopReference().getValueAsDouble() - this.nonClampedTargetRevolution) < this.positionTolerance.getNumber(); 
     }
 
     private double angleToRotation(Rotation2d angle) {
@@ -149,6 +160,7 @@ public class Turret extends SubsystemBase{
         SmartDashboard.putNumber("turret/velocity", this.m_turretMotor.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("turret/position", this.m_turretMotor.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("turret/motor-torque-current", this.m_turretMotor.getTorqueCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("turret/closed-loop-error", this.m_turretMotor.getClosedLoopError().getValueAsDouble());
 
         if (this.autoAimEnabled) {
             if (this.alliance == DriverStation.Alliance.Blue) aimToTargetBlue();

@@ -17,7 +17,10 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 public class RobotContainer {
@@ -26,6 +29,7 @@ public class RobotContainer {
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final CommandXboxController drivestick = new CommandXboxController(0); // My drivestick
+  private final CommandXboxController mechstick = new CommandXboxController(1);
   private final CommandSwerveDrivetrain drivetrain = CommandSwerveDrivetrain.getInstance(); // My drivetrain
 
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
@@ -41,7 +45,23 @@ public class RobotContainer {
 
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
+  private Shooter shooter = Shooter.getInstance();
+  private Turret turret = Turret.getInstance();
+
   private void configureBindings() {
+    this.configureSwerveBindings();
+
+    RobotModeTriggers.teleop().onTrue(
+      Commands.parallel(
+        shooter.normalizeHoodCommand(),
+        turret.normalizeTurretCommand()
+      )
+    );
+
+    
+  }
+
+  private void configureSwerveBindings() {
     // drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
     //     drivetrain.applyRequest(() -> drive.withVelocityX(-drivestick.getLeftY() * MaxSpeed) // Drive forward with
     //                                                                                        // negative Y (forward)
@@ -77,31 +97,31 @@ public class RobotContainer {
         () -> !drivetrain.isRotating() && Math.abs(drivestick.getRightX()) < drivetrain.getTurnDeadBand())
     );
     
-    drivestick.leftBumper().onTrue(
-      new InstantCommand(() -> drivetrain.toggleHeadingPID(), drivetrain)
-    );
+    // drivestick.leftBumper().onTrue(
+    //   new InstantCommand(() -> drivetrain.toggleHeadingPID(), drivetrain)
+    // );
 
-    drivestick.povLeft().onTrue(
-      new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(90), drivetrain)
-    );
+    // drivestick.povLeft().onTrue(
+    //   new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(90), drivetrain)
+    // );
 
-    drivestick.povUp().onTrue(
-      new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(0), drivetrain)
-    );
+    // drivestick.povUp().onTrue(
+    //   new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(0), drivetrain)
+    // );
 
-    drivestick.povRight().onTrue(
-      new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(-90), drivetrain)
-    );
+    // drivestick.povRight().onTrue(
+    //   new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(-90), drivetrain)
+    // );
 
-    drivestick.povDown().onTrue(
-      new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(180), drivetrain)
-    );
+    // drivestick.povDown().onTrue(
+    //   new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(180), drivetrain)
+    // );
 
-    drivestick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    drivestick.b().whileTrue(drivetrain
+    mechstick.x().whileTrue(drivetrain.applyRequest(() -> brake));
+    mechstick.b().whileTrue(drivetrain
         .applyRequest(() -> point.withModuleDirection(new Rotation2d(-drivestick.getLeftY(), -drivestick.getLeftX()))));
 
-    drivestick.y().onTrue(drivetrain.resetHeadingCommand());
+    drivestick.start().onTrue(drivetrain.resetHeadingCommand());
 
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));

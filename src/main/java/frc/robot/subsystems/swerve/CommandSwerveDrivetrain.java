@@ -53,7 +53,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private SmartDashboardNumber driveDeadBand;
     private SmartDashboardNumber turnDeadBand;
 
-    private boolean enableHeadingPID = false;
+    private boolean enableHeadingPID = true;
 
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;

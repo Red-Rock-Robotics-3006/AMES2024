@@ -37,27 +37,35 @@ public class Shooter extends SubsystemBase{
 
     private MotionMagicConfigs shooterMotionMagicConfigs = new MotionMagicConfigs();
 
-    private SmartDashboardNumber shooterAccel = new SmartDashboardNumber("shooter/accel-motion-magic", 0);
+    private SmartDashboardNumber shooterAccel = new SmartDashboardNumber("shooter/accel-motion-magic", 100);
 
     private SmartDashboardNumber shooterKs = new SmartDashboardNumber("shooter/ks", 0);
     private SmartDashboardNumber shooterKa = new SmartDashboardNumber("shooter/ka", 0);
-    private SmartDashboardNumber shooterKv = new SmartDashboardNumber("shooter/kv", 0); //to be tuned;
-    private SmartDashboardNumber shooterKp = new SmartDashboardNumber("shooter/kp", 0); //to be tuned;
+    private SmartDashboardNumber shooterKv = new SmartDashboardNumber("shooter/kv", 0.133); //to be tuned;
+    private SmartDashboardNumber shooterKp = new SmartDashboardNumber("shooter/kp", 0.4); //to be tuned;
     private SmartDashboardNumber shooterKi = new SmartDashboardNumber("shooter/ki", 0);
     private SmartDashboardNumber shooterKd = new SmartDashboardNumber("shooter/kd", 0);
 
     private SmartDashboardNumber hoodKs = new SmartDashboardNumber("hood/ks", 0);
     private SmartDashboardNumber hoodKa = new SmartDashboardNumber("hood/ka", 0);
     private SmartDashboardNumber hoodKv = new SmartDashboardNumber("hood/kv", 0); //to be tuned;
-    private SmartDashboardNumber hoodKp = new SmartDashboardNumber("hood/kp", 0); //to be tuned;
+    private SmartDashboardNumber hoodKp = new SmartDashboardNumber("hood/kp", 7); //to be tuned;
     private SmartDashboardNumber hoodKi = new SmartDashboardNumber("hood/ki", 0);
     private SmartDashboardNumber hoodKd = new SmartDashboardNumber("hood/kd", 0);
 
     private SmartDashboardNumber fenderAngle = new SmartDashboardNumber("fender shot angle", 0);
     private SmartDashboardNumber fenderRPM = new SmartDashboardNumber("fender shot rpm", 0);
 
+    private SmartDashboardNumber lowAngle = new SmartDashboardNumber("low shot angle", 0);
+    private SmartDashboardNumber lowRPM = new SmartDashboardNumber("low shot rpm", 0);
+
     private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("hood/hood-spike-threshold", 0.1);
     private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("hood/hood-normalize-speed", 0.1);
+
+    private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("hood/hood-pid-tolerance", 0.1);
+    private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("hood/hood-position-tolerance", 0.1);
+
+    private double nonClampedTargetRevolution;
 
     //for smartdashboard only
     private double targetHoodAngle;
@@ -117,6 +125,7 @@ public class Shooter extends SubsystemBase{
                                         .withOverrideBrakeDurNeutral(true)
         );
         this.targetHoodAngle = angle;
+        this.nonClampedTargetRevolution = this.angleToRotation(angle);
     }
 
     public void setShooterRPM(double rpm) {
@@ -135,6 +144,11 @@ public class Shooter extends SubsystemBase{
     public void setFenderShotState() {
         this.setHoodAngle(fenderAngle.getNumber());
         this.setShooterRPM(fenderRPM.getNumber());
+    }
+
+    public void setLowShotState() {
+        this.setHoodAngle(lowAngle.getNumber());
+        this.setShooterRPM(lowRPM.getNumber());
     }
 
     public void resetHood() {
@@ -156,6 +170,11 @@ public class Shooter extends SubsystemBase{
 
     public void disableAutoAim() {
         this.autoAimEnabled = false;
+    }
+
+    public boolean isReady() {
+        return Math.abs(this.m_hoodMotor.getClosedLoopError().getValueAsDouble()) < this.pidTolerance.getNumber() &&
+            Math.abs(this.m_hoodMotor.getClosedLoopReference().getValueAsDouble() - this.nonClampedTargetRevolution) < this.positionTolerance.getNumber();
     }
 
     private double angleToRotation(double angle) {
