@@ -7,9 +7,16 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -63,6 +70,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     private SwerveRequest.FieldCentricFacingAngle angleRequest;
 
+    private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
+
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(driveTrainConstants, OdometryUpdateFrequency, modules);
         if (Utils.isSimulation()) {
@@ -79,15 +88,42 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     private void initialize(){
-        this.rotationOmegaSignificance = new SmartDashboardNumber("dt-rotation rate limit", kRotationOmegaSignificance);
-        this.driveMaxSpeed = new SmartDashboardNumber("dt-max drive", kDriveMaxSpeed);
-        this.turnMaxSpeed = new SmartDashboardNumber("dt-max turn", kTurnMaxSpeed);
-        this.driveDeadBand = new SmartDashboardNumber("dt-drive deadband", kDriveDeadBand);
-        this.turnDeadBand = new SmartDashboardNumber("dt-turn deadband", kTurnDeadBand);
+        this.rotationOmegaSignificance = new SmartDashboardNumber("dt/rotation rate limit", kRotationOmegaSignificance);
+        this.driveMaxSpeed = new SmartDashboardNumber("dt/max drive", kDriveMaxSpeed);
+        this.turnMaxSpeed = new SmartDashboardNumber("dt/max turn", kTurnMaxSpeed);
+        this.driveDeadBand = new SmartDashboardNumber("dt/drive deadband", kDriveDeadBand);
+        this.turnDeadBand = new SmartDashboardNumber("dt/turn deadband", kTurnDeadBand);
 
-        this.rotateP = new SmartDashboardNumber("dt-heading p", kRotateP);
-        this.rotateI = new SmartDashboardNumber("dt-heading i", kRotateI);
-        this.rotateD = new SmartDashboardNumber("dt-heading d", kRotateD);
+        this.rotateP = new SmartDashboardNumber("dt/heading p", kRotateP);
+        this.rotateI = new SmartDashboardNumber("dt/heading i", kRotateI);
+        this.rotateD = new SmartDashboardNumber("dt/heading d", kRotateD);
+    }
+
+    private void configurePathPlanner() {
+        double driveBaseRadius = 0;
+        for (var moduleLocation : m_moduleLocations) {
+            driveBaseRadius = Math.max(driveBaseRadius, moduleLocation.getNorm());
+        }
+
+        AutoBuilder.configureHolonomic(
+            ()-> this.getPose(), // Supplier of current robot pose
+            this::seedFieldRelative,  // Consumer for seeding pose against auto
+            this::getCurrentRobotChassisSpeeds,
+            (speeds)->this.setControl(autoRequest.withSpeeds(speeds)), // Consumer of ChassisSpeeds to drive the robot
+            new HolonomicPathFollowerConfig(new PIDConstants(10, 0, 0),
+                                            new PIDConstants(10, 0, 0),
+                                            TunerConstants.kSpeedAt12VoltsMps,
+                                            driveBaseRadius, 
+                                            new ReplanningConfig()),
+            // ()->false, // Change this if the path needs to be flipped on red vs blue
+            () -> {//TODO this is is testing and we hope it works
+                var alliance = DriverStation.getAlliance();
+                if (alliance.isPresent()) {
+                  return alliance.get() == DriverStation.Alliance.Red;
+                }
+                return false;
+            },
+            this); // Subsystem for requirements
     }
 
     public void setSwerveRequest(SwerveRequest.FieldCentricFacingAngle request){
@@ -130,21 +166,21 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
             });
         }
 
-        // this.driveMaxSpeed = SmartDashboard.getNumber("dt-max drive", kDriveMaxSpeed);
-        // this.turnMaxSpeed = SmartDashboard.getNumber("dt-max turn", kTurnMaxSpeed);
-        // this.rotationOmegaSignificance = SmartDashboard.getNumber("dt-rotation rate limit", kRotationOmegaSignificance);
-        // this.driveDeadBand = SmartDashboard.getNumber("dt-drive deadband", kDriveDeadBand);
-        // this.turnDeadBand = SmartDashboard.getNumber("dt-turn deadband", kTurnDeadBand);
+        // this.driveMaxSpeed = SmartDashboard.getNumber("dt/max drive", kDriveMaxSpeed);
+        // this.turnMaxSpeed = SmartDashboard.getNumber("dt/max turn", kTurnMaxSpeed);
+        // this.rotationOmegaSignificance = SmartDashboard.getNumber("dt/rotation rate limit", kRotationOmegaSignificance);
+        // this.driveDeadBand = SmartDashboard.getNumber("dt/drive deadband", kDriveDeadBand);
+        // this.turnDeadBand = SmartDashboard.getNumber("dt/turn deadband", kTurnDeadBand);
 
-        // this.rotateP = SmartDashboard.getNumber("dt-heading p", kRotateP);
-        // this.rotateI = SmartDashboard.getNumber("dt-heading i", kRotateI);
-        // this.rotateD = SmartDashboard.getNumber("dt-heading d", kRotateD);
+        // this.rotateP = SmartDashboard.getNumber("dt/heading p", kRotateP);
+        // this.rotateI = SmartDashboard.getNumber("dt/heading i", kRotateI);
+        // this.rotateD = SmartDashboard.getNumber("dt/heading d", kRotateD);
 
         this.angleRequest.HeadingController.setPID(this.rotateP.getNumber(), this.rotateI.getNumber(), this.rotateD.getNumber());
         
-        SmartDashboard.putBoolean("dt-using heading pid", this.enableHeadingPID);
-        SmartDashboard.putNumber("dt-current heading", this.getHeadingDegrees());
-        SmartDashboard.putNumber("dt-target heading", this.getTargetHeadingDegrees());
+        SmartDashboard.putBoolean("dt/using heading pid", this.enableHeadingPID);
+        SmartDashboard.putNumber("dt/current heading", this.getHeadingDegrees());
+        SmartDashboard.putNumber("dt/target heading", this.getTargetHeadingDegrees());
     }
 
     public Command resetHeadingCommand(){
@@ -162,8 +198,20 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         );
     }
 
+    public Pose2d getPose() {
+        return this.getState().Pose;
+    }
+
+    public ChassisSpeeds getCurrentRobotChassisSpeeds() {
+        return this.getState().speeds;
+    }
+
     public void setTargetHeadingDegrees(double degrees){
         this.targetHeadingDegrees = degrees;
+    }
+
+    public Command getAuto(String s) {
+        return new PathPlannerAuto(s);
     }
 
     public double getHeadingDegrees(){
