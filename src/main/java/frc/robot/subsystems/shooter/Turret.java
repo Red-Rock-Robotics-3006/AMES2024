@@ -11,17 +11,21 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils3006.SmartDashboardNumber;
+import frc.robot.vision.Localization;
 
 public class Turret extends SubsystemBase{
     private static Turret instance = null;
 
-    public static final double kMaxTurretRotation = 0,
-                               kMaxTurretAngle = 0;
-    public static final double kMinTurretRotation = 0,
-                               kMinTurretAngle = 0;
+    //TODO: Most clockwise is min, most counterclockwise is max, aka CCW+
+    //TODO: 0 angle @ centered to robot pointing robot releative front
+    public static final double kMaxTurretRotation = 0;
+    public static final Rotation2d kMaxTurretAngle = new Rotation2d();
+    public static final double kMinTurretRotation = 0;
+    public static final Rotation2d kMinTurretAngle = new Rotation2d();
 
     private TalonFX m_turretMotor = new TalonFX(35);
 
@@ -65,7 +69,7 @@ public class Turret extends SubsystemBase{
         this.m_turretMotor.getConfigurator().apply(motionConfigs);
     }
 
-    public void setTurretPosition(double angle) {
+    public void setTurretPosition(Rotation2d angle) {
         this.m_turretMotor.setControl(
             new MotionMagicVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinTurretRotation, kMaxTurretRotation))
                 .withSlot(0)
@@ -79,8 +83,8 @@ public class Turret extends SubsystemBase{
         this.m_turretMotor.setPosition(0d);
     }
 
-    private double angleToRotation(double angle) {
-        return ((kMaxTurretRotation - kMinTurretRotation) / (kMaxTurretAngle - kMinTurretAngle)) * (angle - kMinTurretAngle) + kMinTurretRotation;
+    private double angleToRotation(Rotation2d angle) {
+        return ((kMaxTurretRotation - kMinTurretRotation) / (kMaxTurretAngle.getDegrees() - kMinTurretAngle.getDegrees())) * (angle.getDegrees() - kMinTurretAngle.getDegrees()) + kMinTurretRotation;
     }
 
     @Override
@@ -113,7 +117,21 @@ public class Turret extends SubsystemBase{
         SmartDashboard.putNumber("turret/position", this.m_turretMotor.getPosition().getValueAsDouble());
     }
 
+    private void aimToTargetRed() {
+        this.setTurretPosition(
+            Localization.getAngleToRed().minus(
+                Localization.getPose2d().getRotation()
+            )
+        );
+    }
 
+    private void aimToTargetBlue() {
+        this.setTurretPosition(
+            Localization.getAngleToBlue().minus(
+                Localization.getPose2d().getRotation()
+            )
+        );
+    }
 
     public static Turret getInstance() {
         if (instance == null) instance = new Turret();

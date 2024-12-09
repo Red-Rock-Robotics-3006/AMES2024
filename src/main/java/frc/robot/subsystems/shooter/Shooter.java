@@ -16,6 +16,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils3006.SmartDashboardNumber;
+import frc.robot.vision.Localization;
 
 public class Shooter extends SubsystemBase{
     private static Shooter instance = null;
@@ -48,6 +49,9 @@ public class Shooter extends SubsystemBase{
     private SmartDashboardNumber hoodKp = new SmartDashboardNumber("hood/kp", 0); //to be tuned;
     private SmartDashboardNumber hoodKi = new SmartDashboardNumber("hood/ki", 0);
     private SmartDashboardNumber hoodKd = new SmartDashboardNumber("hood/kd", 0);
+
+    private SmartDashboardNumber fenderAngle = new SmartDashboardNumber("fender shot angle", 0);
+    private SmartDashboardNumber fenderRPM = new SmartDashboardNumber("fender shot rpm", 0);
 
     //for smartdashboard only
     private double targetHoodAngle;
@@ -123,6 +127,11 @@ public class Shooter extends SubsystemBase{
         this.m_hoodMotor.setPosition(0d);
     }
 
+    public void setFenderShotState() {
+        this.setHoodAngle(fenderAngle.getNumber());
+        this.setShooterRPM(fenderRPM.getNumber());
+    }
+
     private double angleToRotation(double angle) {
         return ((kMaxHoodRotation - kMinHoodRotation) / (kMaxHoodAngle - kMinHoodAngle)) * (angle - kMinHoodAngle) + kMinHoodRotation;
     }
@@ -175,6 +184,18 @@ public class Shooter extends SubsystemBase{
         SmartDashboard.putNumber("hood/position", this.m_hoodMotor.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("hood/hood-target-angle", this.targetHoodAngle);
 
+    }
+
+    private void aimToTargetRed() {
+        ShotParameter p = InterpolatingTable.getRed(Localization.getDistanceToTargetRed());
+        this.setHoodAngle(p.pivotAngleDeg);
+        this.setShooterRPM(p.rpm);
+    }
+
+    private void aimToTargetBlue() {
+        ShotParameter p = InterpolatingTable.getBlue(Localization.getDistanceToTargetBlue());
+        this.setHoodAngle(p.pivotAngleDeg);
+        this.setShooterRPM(p.rpm);
     }
 
     public static Shooter getInstance() {
