@@ -1,10 +1,13 @@
 package frc.robot.subsystems.shooter;
 
+import java.util.Optional;
+
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.CoastOut;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -12,7 +15,11 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils3006.SmartDashboardNumber;
 import frc.robot.vision.Localization;
@@ -42,8 +49,16 @@ public class Turret extends SubsystemBase{
     private SmartDashboardNumber turretKi = new SmartDashboardNumber("turret/ki", 0);
     private SmartDashboardNumber turretKd = new SmartDashboardNumber("turret/kd", 0);
 
+    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("turret/spike-threshold", 0);
+    private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("turret/normalize-reset-speed", 0.1);
+
+    private boolean autoAimEnabled = false;
+    private DriverStation.Alliance alliance;
+
     private Turret() {
         super("turret");
+
+        this.alliance = (DriverStation.getAlliance().isPresent()) ? DriverStation.getAlliance().get() : DriverStation.Alliance.Blue;
 
         this.m_turretMotor.getConfigurator().apply(
             new MotorOutputConfigs()
@@ -83,6 +98,24 @@ public class Turret extends SubsystemBase{
         this.m_turretMotor.setPosition(0d);
     }
 
+    public void enableAutoAim() {
+        this.autoAimEnabled = true;
+    }
+
+    public void disableAutoAim() {
+        this.autoAimEnabled = false;
+    }
+
+    private void setNormalizeSpeed() {
+        this.m_turretMotor.setControl(
+            new DutyCycleOut(this.normalizeSpeed.getNumber())
+        );
+    }
+
+    public boolean inSpikeCurrent() {
+        return this.m_turretMotor.getTorqueCurrent().getValueAsDouble() > this.spikeThreshold.getNumber();
+    }
+
     private double angleToRotation(Rotation2d angle) {
         return ((kMaxTurretRotation - kMinTurretRotation) / (kMaxTurretAngle.getDegrees() - kMinTurretAngle.getDegrees())) * (angle.getDegrees() - kMinTurretAngle.getDegrees()) + kMinTurretRotation;
     }
@@ -115,6 +148,12 @@ public class Turret extends SubsystemBase{
         SmartDashboard.putNumber("turret/acceleration", this.m_turretMotor.getAcceleration().getValueAsDouble());
         SmartDashboard.putNumber("turret/velocity", this.m_turretMotor.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("turret/position", this.m_turretMotor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("turret/motor-torque-current", this.m_turretMotor.getTorqueCurrent().getValueAsDouble());
+
+        if (this.autoAimEnabled) {
+            if (this.alliance == DriverStation.Alliance.Blue) aimToTargetBlue();
+            else aimToTargetRed();
+        }
     }
 
     private void aimToTargetRed() {
@@ -131,6 +170,17 @@ public class Turret extends SubsystemBase{
                 Localization.getPose2d().getRotation()
             )
         );
+    }
+
+    public Command normalizeTurretCommand() {
+        return new FunctionalCommand(
+            () -> {this.disableAutoAim();
+                this.setNormalizeSpeed();
+            }, 
+            () -> {}, 
+            (interrupted) -> {this.reset(); this.enableAutoAim();}, 
+            () -> this.inSpikeCurrent(), 
+            this);
     }
 
     public static Turret getInstance() {
