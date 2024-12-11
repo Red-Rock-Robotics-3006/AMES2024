@@ -23,9 +23,9 @@ import frc.robot.Utils3006.SmartDashboardNumber;
 public class Intake extends SubsystemBase {
     private static Intake instance = null;
 
-    private final TalonFX m_slapLeft = new TalonFX(21); // change motor ID
-    private final TalonFX m_slapRight = new TalonFX(22); // change motor ID
-    private final TalonFX m_intake = new TalonFX(20); // change motor ID
+    private final TalonFX m_slapLeft = new TalonFX(21, "*"); // change motor ID
+    private final TalonFX m_slapRight = new TalonFX(22, "*"); // change motor ID
+    private final TalonFX m_intake = new TalonFX(20, "*"); // change motor ID
 
     private Slot0Configs pivotSlot0Configs = new Slot0Configs();
     private Slot0Configs intakeSlot0Configs = new Slot0Configs();
@@ -33,15 +33,14 @@ public class Intake extends SubsystemBase {
     private MotionMagicConfigs pivotMotionConfigs = new MotionMagicConfigs();
     private MotionMagicConfigs intakeMotionConfigs = new MotionMagicConfigs();
 
-    private SmartDashboardNumber pivotMotionAccel = new SmartDashboardNumber("pivot/pivot-mm-accel", 0);
-    private SmartDashboardNumber pivotMotionVelo = new SmartDashboardNumber("pivot/pivot-mm-velo", 0);
+    private SmartDashboardNumber pivotMotionAccel = new SmartDashboardNumber("pivot/pivot-mm-accel", 175);
+    private SmartDashboardNumber pivotMotionVelo = new SmartDashboardNumber("pivot/pivot-mm-velo", 75);
 
-    private SmartDashboardNumber intakeMotionAccel = new SmartDashboardNumber("intake/intake-mm-accel", 0);
-    private SmartDashboardNumber intakeMotionVelo = new SmartDashboardNumber("intake/intake-mm-velo", 0);
+    private SmartDashboardNumber intakeMotionAccel = new SmartDashboardNumber("intake/intake-mm-accel", 30);
 
     private SmartDashboardNumber intakeKs = new SmartDashboardNumber("intake/ks", 0);
     private SmartDashboardNumber intakeKa = new SmartDashboardNumber("intake/ka", 0);
-    private SmartDashboardNumber intakeKv = new SmartDashboardNumber("intake/kv", 0); // to be tuned;
+    private SmartDashboardNumber intakeKv = new SmartDashboardNumber("intake/kv", 0.1); // to be tuned;
     private SmartDashboardNumber intakeKp = new SmartDashboardNumber("intake/kp", 0);
     private SmartDashboardNumber intakeKi = new SmartDashboardNumber("intake/ki", 0);
     private SmartDashboardNumber intakeKd = new SmartDashboardNumber("intake/kd", 0);
@@ -49,19 +48,19 @@ public class Intake extends SubsystemBase {
     private SmartDashboardNumber pivotKs = new SmartDashboardNumber("pivot/ks", 0);
     private SmartDashboardNumber pivotKa = new SmartDashboardNumber("pivot/ka", 0);
     private SmartDashboardNumber pivotKv = new SmartDashboardNumber("pivot/kv", 0); // to be tuned;
-    private SmartDashboardNumber pivotKp = new SmartDashboardNumber("pivot/kp", 0); // to be tuned;
+    private SmartDashboardNumber pivotKp = new SmartDashboardNumber("pivot/kp", 1); // to be tuned;
     private SmartDashboardNumber pivotKi = new SmartDashboardNumber("pivot/ki", 0);
     private SmartDashboardNumber pivotKd = new SmartDashboardNumber("pivot/kd", 0);
 
-    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", 0);
+    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", -2700);
 
     private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", -0.05);
 
-    private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 0);
-    private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 0);
+    private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 0.35);
+    private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 28.3);
 
     private SmartDashboardNumber pivotTolerance = new SmartDashboardNumber("pivot/pivot-tolerance", 0.1);
-    private SmartDashboardNumber pivotSpikeThreshold = new SmartDashboardNumber("pivot/pivot-spike-threshold", 0.1);
+    private SmartDashboardNumber pivotSpikeThreshold = new SmartDashboardNumber("pivot/pivot-spike-threshold", 5);
 
     private Intake() {
         super("Intake");
@@ -76,6 +75,7 @@ public class Intake extends SubsystemBase {
 
         this.m_slapRight.getConfigurator().apply(
                 new MotorOutputConfigs()
+                        .withInverted(InvertedValue.Clockwise_Positive)
                         .withPeakForwardDutyCycle(1d)
                         .withPeakReverseDutyCycle(-1d)
                         .withNeutralMode(NeutralModeValue.Brake));
@@ -109,8 +109,7 @@ public class Intake extends SubsystemBase {
             .withMotionMagicCruiseVelocity(pivotMotionVelo.getNumber());
 
         intakeMotionConfigs = new MotionMagicConfigs()
-            .withMotionMagicAcceleration(intakeMotionAccel.getNumber())
-            .withMotionMagicCruiseVelocity(intakeMotionVelo.getNumber());
+            .withMotionMagicAcceleration(intakeMotionAccel.getNumber());
 
         this.m_slapLeft.getConfigurator().apply(pivotSlot0Configs);
         this.m_slapRight.getConfigurator().apply(pivotSlot0Configs);
@@ -141,7 +140,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void enableIntake() {
-        this.m_intake.setControl(new MotionMagicVelocityVoltage(intakeSpeed.getNumber()) // change
+        this.m_intake.setControl(new MotionMagicVelocityVoltage(intakeSpeed.getNumber() / 60d) // change
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(true));
@@ -213,9 +212,8 @@ public class Intake extends SubsystemBase {
             System.out.println("applyied");
         }
 
-        if (intakeMotionAccel.hasChanged() || intakeMotionVelo.hasChanged()) {
+        if (intakeMotionAccel.hasChanged()) {
             this.intakeMotionConfigs.MotionMagicAcceleration = intakeMotionAccel.getNumber();
-            this.intakeMotionConfigs.MotionMagicCruiseVelocity = intakeMotionVelo.getNumber();
             this.m_intake.getConfigurator().apply(intakeMotionConfigs);
         }
 
@@ -223,6 +221,9 @@ public class Intake extends SubsystemBase {
         SmartDashboard.putNumber("intake/intake-right-position", m_slapRight.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("intake/intake-left-spike", m_slapLeft.getTorqueCurrent().getValueAsDouble());
         SmartDashboard.putNumber("intake/intake-right-spike", m_slapRight.getTorqueCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("intake/intake-left-velocity", m_slapLeft.getVelocity().getValueAsDouble());
+
+        SmartDashboard.putNumber("intake/intake-velo", m_intake.getVelocity().getValueAsDouble());
 
     }
 

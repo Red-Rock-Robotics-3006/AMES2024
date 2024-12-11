@@ -8,19 +8,22 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import frc.robot.Utils3006.SmartDashboardNumber;
 
 public class Localization {
     private static int[] validIDs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     private static String[] limeLightNames = {"limelight-front", "limelight-back"};
-    private static NetworkTable[] limelightTables;
+    private static double[][] limeLightStdvs = {
+        {0.8, 0.8, 9999},
+        {0.8, 0.8, 9999}
+    };
+
+    private static LimeLightPoseEstimateWrapper[] wrappers;
 
     public static void initialize() {
-        limelightTables = new NetworkTable[limeLightNames.length];
-        int i = 0;
-        for (String s : limeLightNames) {
-            LimelightHelpers.SetFiducialIDFiltersOverride(s, validIDs);
-            limelightTables[i] = NetworkTableInstance.getDefault().getTable(s);
-            i++;
+        wrappers = new LimeLightPoseEstimateWrapper[limeLightNames.length];
+        for (int i = 0; i < limeLightNames.length; i++) {
+            wrappers[i] = new LimeLightPoseEstimateWrapper().withName(limeLightNames[i]);
         }
     }
 
@@ -63,6 +66,7 @@ public class Localization {
         public LimelightHelpers.PoseEstimate poseEstimate;
         public String name;
         public double[] stdvs;
+        private SmartDashboardNumber[] kStdvs;
 
         public Matrix<N3, N1> getStdvs() {
             return VecBuilder.fill(
@@ -74,6 +78,17 @@ public class Localization {
 
         public LimeLightPoseEstimateWrapper withName(String name) {
             this.name = name;
+            double[] stdvDefVals = new double[] {0.8, 0.8, 9999};
+            for (int i = 0; i < Localization.limeLightNames.length; i++) {
+                if (Localization.limeLightNames[i].equals(name)) {
+                    stdvDefVals = limeLightStdvs[i];
+                    break;
+                }
+            }
+
+            kStdvs[0] = new SmartDashboardNumber(this.name + "/stdvX", stdvDefVals[0]);
+            kStdvs[1] = new SmartDashboardNumber(this.name + "/stdvY", stdvDefVals[1]);
+            kStdvs[2] = new SmartDashboardNumber(this.name + "/stdvTheta", stdvDefVals[2]);
             return this;
         }
 

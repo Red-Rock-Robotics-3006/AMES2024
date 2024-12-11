@@ -26,28 +26,28 @@ public class Turret extends SubsystemBase{
 
     //TODO: Most clockwise is min, most counterclockwise is max, aka CCW+
     //TODO: 0 angle @ centered to robot pointing robot releative front
-    public static final double kMaxTurretRotation = 0;
-    public static final Rotation2d kMaxTurretAngle = new Rotation2d();
+    public static final double kMaxTurretRotation = 9.73;
+    public static final Rotation2d kMaxTurretAngle = Rotation2d.fromDegrees(240);
     public static final double kMinTurretRotation = 0;
-    public static final Rotation2d kMinTurretAngle = new Rotation2d();
+    public static final Rotation2d kMinTurretAngle = Rotation2d.fromDegrees(-110);
 
-    private TalonFX m_turretMotor = new TalonFX(40);
+    private TalonFX m_turretMotor = new TalonFX(40, "*");
 
     private Slot0Configs slot0Configs = new Slot0Configs();
     private MotionMagicConfigs motionConfigs = new MotionMagicConfigs();
 
-    private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/turret-motion-accel", 0);
-    private SmartDashboardNumber kTurretVel = new SmartDashboardNumber("turret/turret-motion-velocity", 0);
+    private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/turret-motion-accel", 40);
+    private SmartDashboardNumber kTurretVel = new SmartDashboardNumber("turret/turret-motion-velocity", 40);
 
     private SmartDashboardNumber turretKs = new SmartDashboardNumber("turret/ks", 0);
     private SmartDashboardNumber turretKa = new SmartDashboardNumber("turret/ka", 0);
     private SmartDashboardNumber turretKv = new SmartDashboardNumber("turret/kv", 0); //to be tuned;
-    private SmartDashboardNumber turretKp = new SmartDashboardNumber("turret/kp", 0); //to be tuned;
+    private SmartDashboardNumber turretKp = new SmartDashboardNumber("turret/kp", 10); //to be tuned;
     private SmartDashboardNumber turretKi = new SmartDashboardNumber("turret/ki", 0);
     private SmartDashboardNumber turretKd = new SmartDashboardNumber("turret/kd", 0);
 
-    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("turret/turret-spike-threshold", 0);
-    private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("turret/normalize-reset-speed", 0.1);
+    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("turret/turret-spike-threshold", 10);
+    private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("turret/normalize-reset-speed", -0.05);
 
     private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("turret/turret-pid-Tolerance", 0.1);
     private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("turret/turret-position-tolerance", 0.1);
@@ -64,7 +64,7 @@ public class Turret extends SubsystemBase{
 
         this.m_turretMotor.getConfigurator().apply(
             new MotorOutputConfigs()
-                .withInverted(InvertedValue.CounterClockwise_Positive)
+                .withInverted(InvertedValue.Clockwise_Positive)
                 .withPeakForwardDutyCycle(1d)
                 .withPeakReverseDutyCycle(-1d)
                 .withNeutralMode(NeutralModeValue.Brake)
@@ -88,7 +88,7 @@ public class Turret extends SubsystemBase{
 
     public void setTurretPosition(Rotation2d angle) {
         this.m_turretMotor.setControl(
-            new MotionMagicVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinTurretRotation, kMaxTurretRotation))
+            new MotionMagicVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinTurretRotation + 0.2, kMaxTurretRotation - 0.2))
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(true)
@@ -126,7 +126,11 @@ public class Turret extends SubsystemBase{
     }
 
     private double angleToRotation(Rotation2d angle) {
-        return ((kMaxTurretRotation - kMinTurretRotation) / (kMaxTurretAngle.getDegrees() - kMinTurretAngle.getDegrees())) * (angle.getDegrees() - kMinTurretAngle.getDegrees()) + kMinTurretRotation;
+        double a = MathUtil.inputModulus(angle.getDegrees(), -180, 180);
+        double min = MathUtil.inputModulus(kMinTurretAngle.getDegrees(), -180, 180);
+        double max = MathUtil.inputModulus(kMaxTurretAngle.getDegrees(), -180, 180) + 360;
+        if (a < min) a += 360;
+        return ((kMaxTurretRotation - kMinTurretRotation) / (max - min)) * (a - min) + kMinTurretRotation;
     }
 
     @Override
@@ -159,9 +163,13 @@ public class Turret extends SubsystemBase{
         SmartDashboard.putNumber("turret/turret-position", this.m_turretMotor.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("turret/turret-motor-torque-current", this.m_turretMotor.getTorqueCurrent().getValueAsDouble());
         SmartDashboard.putNumber("turret/turret-closed-loop-error", this.m_turretMotor.getClosedLoopError().getValueAsDouble());
+        SmartDashboard.putNumber("turret/turret-non-clamped-target-rev", this.nonClampedTargetRevolution);
 
         SmartDashboard.putBoolean("turret/turret-auto-aim-enabled", this.autoAimEnabled);
         SmartDashboard.putBoolean("turret/turret-at-spike", this.inSpikeCurrent());
+
+        SmartDashboard.putBoolean("turret/turret-is-ready", this.isReady());
+
 
         if (this.autoAimEnabled) {
             if (this.alliance == DriverStation.Alliance.Blue) aimToTargetBlue();

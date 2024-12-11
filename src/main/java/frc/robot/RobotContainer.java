@@ -55,6 +55,7 @@ public class RobotContainer {
 
   private void configureBindings() {
     this.configureSwerveBindings();
+    this.configureMechBindings();
 
     // RobotModeTriggers.teleop().onTrue(
     //   Commands.parallel(
@@ -63,33 +64,54 @@ public class RobotContainer {
     //   )
     // );
 
-    mechstick.a().onTrue(
-      turret.normalizeTurretCommand()
-    );
+    // mechstick.a().onTrue(
+    //   turret.normalizeTurretCommand()
+    // );
 
-    mechstick.b().onTrue(
-      shooter.normalizeHoodCommand()
-    );
+    // mechstick.b().onTrue(
+    //   shooter.normalizeHoodCommand()
+    // );
 
-    mechstick.x().onTrue(
-      intake.normalizePivotCommand()
-    );
+    // mechstick.x().onTrue(
+    //   intake.normalizePivotCommand()
+    // );
 
-    mechstick.povUp().onTrue(
-      Commands.runOnce(
-        () -> {shooter.setFenderShotState(); turret.setTurretPosition(new Rotation2d());}, 
-        shooter, turret)
-    );
+    // mechstick.y().onTrue(
+    //   new InstantCommand(() -> shooter.setRequestedRPM(), shooter)
+    // ).onFalse(
+    //   new InstantCommand(() -> shooter.setShooterRPM(0), shooter)
+    // );
 
-    mechstick.leftBumper().onTrue(
-      Commands.runOnce(
-        () -> {index.startMainIndex(); index.startSecondaryIndex();}, index)
-    );
+    // mechstick.povUp().onTrue(
+    //   Commands.runOnce(
+    //     () -> {shooter.setFenderShotState(); turret.setTurretPosition(new Rotation2d());}, 
+    //     shooter, turret)
+    // );
 
-    mechstick.rightBumper().onTrue(
-      Commands.runOnce(
-        () -> {index.stopMainIndex(); index.stopSecondaryIndex();}, index)
-    );
+    // mechstick.povLeft().onTrue(
+    //   intake.setDeployPositionCommand()
+    // );
+
+    // mechstick.povRight().onTrue(
+    //   intake.setStowPositionCommand()
+    // );
+
+    // mechstick.leftBumper().onTrue(
+    //   Commands.runOnce(
+    //     () -> {index.startMainIndex(); index.startSecondaryIndex();}, index)
+    // );
+
+    // mechstick.rightBumper().onTrue(
+    //   Commands.runOnce(
+    //     () -> {index.stopMainIndex(); index.stopSecondaryIndex();}, index)
+    // );
+
+    // mechstick.back().onTrue(intake.enableIntakeCommand());
+    // mechstick.start().onTrue(intake.disableIntakeCommand());
+
+    mechstick.a().onTrue(index.startMainIndexCommand());
+    mechstick.b().onTrue(index.stopMainIndexCommand());
+    mechstick.y().onTrue(intake.normalizePivotCommand());
   }
 
   private void configureMechBindings() {
@@ -106,7 +128,7 @@ public class RobotContainer {
         () -> {index.startSecondaryIndex();}, 
         () -> shooter.setRequestedRPM(), 
         (interrupted) -> {shooter.setShooterRPM(0); index.stopSecondaryIndex();},
-        () -> !drivestick.getHID().getAButton(), shooter)
+        () -> !(drivestick.getHID().getRightTriggerAxis() > 0.25), shooter)
     );
 
     drivestick.a().onTrue(Commands.sequence(intake.enableIntakeCommand(), intake.setDeployPositionCommand()));
@@ -176,9 +198,9 @@ public class RobotContainer {
     //   new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(180), drivetrain)
     // );
 
-    mechstick.x().whileTrue(drivetrain.applyRequest(() -> brake));
-    mechstick.b().whileTrue(drivetrain
-        .applyRequest(() -> point.withModuleDirection(new Rotation2d(-drivestick.getLeftY(), -drivestick.getLeftX()))));
+    // mechstick.x().whileTrue(drivetrain.applyRequest(() -> brake));
+    // mechstick.b().whileTrue(drivetrain
+    //     .applyRequest(() -> point.withModuleDirection(new Rotation2d(-drivestick.getLeftY(), -drivestick.getLeftX()))));
 
     drivestick.start().onTrue(drivetrain.resetHeadingCommand());
 

@@ -13,8 +13,8 @@ import frc.robot.Utils3006.SmartDashboardNumber;
 
 public class Index extends SubsystemBase{
     private static Index instance = null;
-    private TalonFX m_indexMainMotor = new TalonFX(30);
-    private TalonFX m_indexSecondaryMotor = new TalonFX(31);
+    private TalonFX m_indexMainMotor = new TalonFX(30, "*");
+    private TalonFX m_indexSecondaryMotor = new TalonFX(31, "*");
 
     private SmartDashboardNumber mainIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.5);
     private SmartDashboardNumber secondaryIndexSpeed = new SmartDashboardNumber("index/index-secondary-speed", 0.9);
@@ -32,7 +32,7 @@ public class Index extends SubsystemBase{
 
         this.m_indexSecondaryMotor.getConfigurator().apply(
             new MotorOutputConfigs()
-                .withInverted(InvertedValue.CounterClockwise_Positive)
+                .withInverted(InvertedValue.Clockwise_Positive)
                 .withPeakForwardDutyCycle(1d)
                 .withPeakReverseDutyCycle(-1d)
                 .withNeutralMode(NeutralModeValue.Brake)
