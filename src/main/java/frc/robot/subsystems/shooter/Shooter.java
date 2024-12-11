@@ -10,7 +10,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -36,8 +36,12 @@ public class Shooter extends SubsystemBase{
     private Slot0Configs hoodSlot0Configs = new Slot0Configs();
 
     private MotionMagicConfigs shooterMotionMagicConfigs = new MotionMagicConfigs();
+    private MotionMagicConfigs hoodMotionMagicConfigs = new MotionMagicConfigs();
 
     private SmartDashboardNumber shooterAccel = new SmartDashboardNumber("shooter/shooter-accel-motion-magic", 100);
+
+    private SmartDashboardNumber hoodMotionAccel = new SmartDashboardNumber("hood/hood-mm-accel", 0);
+    private SmartDashboardNumber hoodMotionVelo = new SmartDashboardNumber("hood/hood-mm-velo", 0);
 
     private SmartDashboardNumber shooterKs = new SmartDashboardNumber("shooter/ks", 0);
     private SmartDashboardNumber shooterKa = new SmartDashboardNumber("shooter/ka", 0);
@@ -59,13 +63,14 @@ public class Shooter extends SubsystemBase{
     private SmartDashboardNumber lowAngle = new SmartDashboardNumber("low shot angle", 0);
     private SmartDashboardNumber lowRPM = new SmartDashboardNumber("low shot rpm", 0);
 
-    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("hood/hood-spike-threshold", 0.1);
-    private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("hood/hood-normalize-speed", 0.1);
+    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("hood/hood-spike-threshold", 10.5);
+    private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("hood/hood-normalize-speed", -0.05);
 
     private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("hood/hood-pid-tolerance", 0.1);
     private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("hood/hood-position-tolerance", 0.1);
 
     private double nonClampedTargetRevolution;
+    private double requestedRPM;
 
     //for smartdashboard only
     private double targetHoodAngle;
@@ -90,7 +95,7 @@ public class Shooter extends SubsystemBase{
             new MotorOutputConfigs()
                 .withInverted(InvertedValue.CounterClockwise_Positive)
                 .withPeakForwardDutyCycle(1d)
-                .withPeakReverseDutyCycle(1d)
+                .withPeakReverseDutyCycle(-1d)
                 .withNeutralMode(NeutralModeValue.Brake)
         );
 
@@ -113,13 +118,17 @@ public class Shooter extends SubsystemBase{
         this.shooterMotionMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicAcceleration(shooterAccel.getNumber());
 
+        this.hoodMotionMagicConfigs = new MotionMagicConfigs()
+            .withMotionMagicAcceleration(hoodMotionAccel.getNumber())
+            .withMotionMagicCruiseVelocity(hoodMotionVelo.getNumber());
+
         this.m_shooterMotor.getConfigurator().apply(shooterSlot0Configs);
         this.m_shooterMotor.getConfigurator().apply(shooterMotionMagicConfigs);
         this.m_hoodMotor.getConfigurator().apply(hoodSlot0Configs);
     }
 
     public void setHoodAngle(double angle) {
-        this.m_hoodMotor.setControl(new PositionVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinHoodRotation, kMaxHoodRotation))
+        this.m_hoodMotor.setControl(new MotionMagicVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinHoodRotation, kMaxHoodRotation))
                                         .withSlot(0)
                                         .withEnableFOC(true)
                                         .withOverrideBrakeDurNeutral(true)
@@ -141,14 +150,18 @@ public class Shooter extends SubsystemBase{
         this.targetRPM = rpm;
     }
 
+    public void setRequestedRPM() {
+        this.setShooterRPM(this.requestedRPM);
+    }
+
     public void setFenderShotState() {
         this.setHoodAngle(fenderAngle.getNumber());
-        this.setShooterRPM(fenderRPM.getNumber());
+        this.requestedRPM = fenderRPM.getNumber();
     }
 
     public void setLowShotState() {
         this.setHoodAngle(lowAngle.getNumber());
-        this.setShooterRPM(lowRPM.getNumber());
+        this.requestedRPM = lowRPM.getNumber();
     }
 
     public void resetHood() {
@@ -157,7 +170,7 @@ public class Shooter extends SubsystemBase{
     }
 
     public boolean inSpikeCurrent() {
-        return this.m_hoodMotor.getTorqueCurrent().getValueAsDouble() > this.spikeThreshold.getNumber();
+        return Math.abs(this.m_hoodMotor.getTorqueCurrent().getValueAsDouble()) > this.spikeThreshold.getNumber();
     }
 
     private void setNormalizeSpeed() {
@@ -226,10 +239,18 @@ public class Shooter extends SubsystemBase{
             System.out.println("applyied");
         }
 
+        if (hoodMotionAccel.hasChanged() || hoodMotionVelo.hasChanged()) {
+            hoodMotionMagicConfigs.MotionMagicAcceleration = this.hoodMotionAccel.getNumber();
+            hoodMotionMagicConfigs.MotionMagicCruiseVelocity = this.hoodMotionVelo.getNumber();
+            this.m_hoodMotor.getConfigurator().apply(this.hoodMotionMagicConfigs);
+        }
+
         SmartDashboard.putNumber("hood/hood-position", this.m_hoodMotor.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("hood/hood-target-angle", this.targetHoodAngle);
         SmartDashboard.putNumber("hood/hood-torque-current", this.m_hoodMotor.getTorqueCurrent().getValueAsDouble());
         SmartDashboard.putBoolean("hood/hood-at-spike", this.inSpikeCurrent());
+        SmartDashboard.putBoolean("hood/hood-is-ready", this.isReady());
+        SmartDashboard.putBoolean("hood/hood-auto-aim-enabled", this.autoAimEnabled);
 
         if (this.autoAimEnabled) {
             if (this.onBlue) this.aimToTargetBlue();
@@ -240,13 +261,13 @@ public class Shooter extends SubsystemBase{
     private void aimToTargetRed() {
         ShotParameter p = InterpolatingTable.getRed(Localization.getDistanceToTargetRed());
         this.setHoodAngle(p.pivotAngleDeg);
-        this.setShooterRPM(p.rpm);
+        this.requestedRPM = p.rpm;
     }
 
     private void aimToTargetBlue() {
         ShotParameter p = InterpolatingTable.getBlue(Localization.getDistanceToTargetBlue());
         this.setHoodAngle(p.pivotAngleDeg);
-        this.setShooterRPM(p.rpm);
+        this.requestedRPM = p.rpm;
     }
 
     public Command normalizeHoodCommand() {
@@ -258,7 +279,6 @@ public class Shooter extends SubsystemBase{
             () -> {}, 
             (interrupted) -> {
                 this.resetHood();
-                this.enableAutoAim();
             }, 
             () -> this.inSpikeCurrent(), 
             this);

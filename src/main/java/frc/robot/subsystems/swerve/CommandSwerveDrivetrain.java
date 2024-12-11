@@ -9,7 +9,6 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
@@ -27,6 +26,8 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.Utils3006.SmartDashboardNumber;
 import frc.robot.subsystems.swerve.generated.TunerConstants;
+import frc.robot.vision.LimelightHelpers;
+import frc.robot.vision.Localization;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements
@@ -181,6 +182,18 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         SmartDashboard.putBoolean("dt/using heading pid", this.enableHeadingPID);
         SmartDashboard.putNumber("dt/current heading", this.getHeadingDegrees());
         SmartDashboard.putNumber("dt/target heading", this.getTargetHeadingDegrees());
+    }
+
+    // public void updateVisionMeasurements() {
+    //     for (LimelightHelpers.PoseEstimate estimate : Localization.getPoseEstimates(this.getHeadingDegrees())) {
+    //         if (poseEstimateIsValid(estimate)) {
+    //             // this.
+    //         }
+    //     }
+    // }
+
+    private boolean poseEstimateIsValid(LimelightHelpers.PoseEstimate e) {
+        return true;
     }
 
     public Command resetHeadingCommand(){

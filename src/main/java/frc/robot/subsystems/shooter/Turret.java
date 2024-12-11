@@ -1,7 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import java.util.Optional;
-
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -16,7 +14,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -69,7 +66,7 @@ public class Turret extends SubsystemBase{
             new MotorOutputConfigs()
                 .withInverted(InvertedValue.CounterClockwise_Positive)
                 .withPeakForwardDutyCycle(1d)
-                .withPeakReverseDutyCycle(1d)
+                .withPeakReverseDutyCycle(-1d)
                 .withNeutralMode(NeutralModeValue.Brake)
         );
 
@@ -102,6 +99,7 @@ public class Turret extends SubsystemBase{
     public void reset() {
         this.m_turretMotor.setControl(new CoastOut());
         this.m_turretMotor.setPosition(0d);
+        this.m_turretMotor.setControl(new DutyCycleOut(0));
     }
 
     public void enableAutoAim() {
@@ -119,7 +117,7 @@ public class Turret extends SubsystemBase{
     }
 
     public boolean inSpikeCurrent() {
-        return this.m_turretMotor.getTorqueCurrent().getValueAsDouble() > this.spikeThreshold.getNumber();
+        return Math.abs(this.m_turretMotor.getTorqueCurrent().getValueAsDouble()) > this.spikeThreshold.getNumber();
     }
 
     public boolean isReady() {
@@ -162,6 +160,7 @@ public class Turret extends SubsystemBase{
         SmartDashboard.putNumber("turret/turret-motor-torque-current", this.m_turretMotor.getTorqueCurrent().getValueAsDouble());
         SmartDashboard.putNumber("turret/turret-closed-loop-error", this.m_turretMotor.getClosedLoopError().getValueAsDouble());
 
+        SmartDashboard.putBoolean("turret/turret-auto-aim-enabled", this.autoAimEnabled);
         SmartDashboard.putBoolean("turret/turret-at-spike", this.inSpikeCurrent());
 
         if (this.autoAimEnabled) {
@@ -192,7 +191,7 @@ public class Turret extends SubsystemBase{
                 this.setNormalizeSpeed();
             }, 
             () -> {}, 
-            (interrupted) -> {this.reset(); this.enableAutoAim();}, 
+            (interrupted) -> {this.reset();}, 
             () -> this.inSpikeCurrent(), 
             this);
     }

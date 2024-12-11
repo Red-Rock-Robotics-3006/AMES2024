@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -100,9 +101,23 @@ public class RobotContainer {
       )
     );
 
-    // drivestick.a().onTrue(
-      
-    // )
+    new Trigger(() -> drivestick.getHID().getRightTriggerAxis() > 0.25).onTrue(
+      new FunctionalCommand(
+        () -> {index.startSecondaryIndex();}, 
+        () -> shooter.setRequestedRPM(), 
+        (interrupted) -> {shooter.setShooterRPM(0); index.stopSecondaryIndex();},
+        () -> !drivestick.getHID().getAButton(), shooter)
+    );
+
+    drivestick.a().onTrue(Commands.sequence(intake.enableIntakeCommand(), intake.setDeployPositionCommand()));
+    drivestick.b().onTrue(Commands.sequence(intake.disableIntakeCommand(), intake.setStowPositionCommand()));
+
+    drivestick.x().onTrue(new InstantCommand(() -> {shooter.disableAutoAim(); turret.disableAutoAim(); shooter.setFenderShotState(); turret.setTurretPosition(new Rotation2d());}, shooter, turret));
+    drivestick.y().onTrue(new InstantCommand(() -> {shooter.disableAutoAim();turret.disableAutoAim(); shooter.setLowShotState(); turret.setTurretPosition(new Rotation2d());}, shooter, turret));
+
+    drivestick.leftBumper().onTrue(new InstantCommand(() -> {shooter.enableAutoAim(); turret.enableAutoAim();}, shooter, turret));
+
+    
   }
 
   private void configureSwerveBindings() {

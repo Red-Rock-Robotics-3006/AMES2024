@@ -4,14 +4,11 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.Slot1Configs;
-import com.ctre.phoenix6.configs.Slot2Configs;
 import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -58,7 +55,7 @@ public class Intake extends SubsystemBase {
 
     private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", 0);
 
-    private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", 0);
+    private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", -0.05);
 
     private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 0);
     private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 0);
@@ -68,14 +65,7 @@ public class Intake extends SubsystemBase {
 
     private Intake() {
         super("Intake");
-
-        this.m_slapRight.getConfigurator().apply(
-                new MotorOutputConfigs()
-                        .withInverted(InvertedValue.CounterClockwise_Positive)
-                        .withPeakForwardDutyCycle(1d)
-                        .withPeakReverseDutyCycle(-1d)
-                        .withNeutralMode(NeutralModeValue.Brake));
-
+        
         this.m_slapLeft.getConfigurator().apply(
             new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
@@ -83,6 +73,13 @@ public class Intake extends SubsystemBase {
                 .withPeakReverseDutyCycle(-1d)
                 .withNeutralMode(NeutralModeValue.Brake)
         );
+
+        this.m_slapRight.getConfigurator().apply(
+                new MotorOutputConfigs()
+                        .withPeakForwardDutyCycle(1d)
+                        .withPeakReverseDutyCycle(-1d)
+                        .withNeutralMode(NeutralModeValue.Brake));
+
 
         this.m_intake.getConfigurator().apply(
                 new MotorOutputConfigs()
@@ -165,11 +162,12 @@ public class Intake extends SubsystemBase {
         this.m_slapLeft.setControl(new CoastOut());
         this.m_slapLeft.setPosition(0);
         this.m_slapRight.setPosition(0);
+        this.m_slapLeft.setControl(new DutyCycleOut(0));
     }
 
     public boolean atCurrentSpike() { // TODO
-        return this.m_slapLeft.getTorqueCurrent().getValueAsDouble() > this.pivotSpikeThreshold.getNumber() ||
-                this.m_slapRight.getTorqueCurrent().getValueAsDouble() > this.pivotSpikeThreshold.getNumber();
+        return Math.abs(this.m_slapLeft.getTorqueCurrent().getValueAsDouble()) > this.pivotSpikeThreshold.getNumber() ||
+                Math.abs(this.m_slapRight.getTorqueCurrent().getValueAsDouble()) > this.pivotSpikeThreshold.getNumber();
     }
 
     @Override
@@ -211,7 +209,7 @@ public class Intake extends SubsystemBase {
             intakeSlot0Configs.kD = intakeKd.getNumber();
             intakeSlot0Configs.kA = intakeKa.getNumber();
 
-            if (!Utils.isSimulation()) {this.m_slapLeft.getConfigurator().apply(intakeSlot0Configs); this.m_slapRight.getConfigurator().apply(intakeSlot0Configs);}
+            if (!Utils.isSimulation()) this.m_intake.getConfigurator().apply(intakeSlot0Configs);
             System.out.println("applyied");
         }
 
