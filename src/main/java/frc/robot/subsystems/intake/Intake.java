@@ -54,13 +54,13 @@ public class Intake extends SubsystemBase {
 
     private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", -2700);
 
-    private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", -0.05);
+    private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", -0.1);
 
     private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 0.35);
     private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 28.3);
 
     private SmartDashboardNumber pivotTolerance = new SmartDashboardNumber("pivot/pivot-tolerance", 0.1);
-    private SmartDashboardNumber pivotSpikeThreshold = new SmartDashboardNumber("pivot/pivot-spike-threshold", 5);
+    private SmartDashboardNumber pivotSpikeThreshold = new SmartDashboardNumber("pivot/pivot-spike-threshold", 10);
 
     private Intake() {
         super("Intake");

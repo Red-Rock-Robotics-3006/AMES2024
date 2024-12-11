@@ -57,8 +57,8 @@ public class Shooter extends SubsystemBase{
     private SmartDashboardNumber hoodKi = new SmartDashboardNumber("hood/ki", 0);
     private SmartDashboardNumber hoodKd = new SmartDashboardNumber("hood/kd", 0);
 
-    private SmartDashboardNumber fenderAngle = new SmartDashboardNumber("fender shot angle", 65);
-    private SmartDashboardNumber fenderRPM = new SmartDashboardNumber("fender shot rpm", 2000);
+    private SmartDashboardNumber fenderAngle = new SmartDashboardNumber("fender shot angle", 50);
+    private SmartDashboardNumber fenderRPM = new SmartDashboardNumber("fender shot rpm", 1500);
 
     private SmartDashboardNumber lowAngle = new SmartDashboardNumber("low shot angle", 85);
     private SmartDashboardNumber lowRPM = new SmartDashboardNumber("low shot rpm", 1000);

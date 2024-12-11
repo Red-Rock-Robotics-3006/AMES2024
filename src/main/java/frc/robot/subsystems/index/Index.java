@@ -16,7 +16,7 @@ public class Index extends SubsystemBase{
     private TalonFX m_indexMainMotor = new TalonFX(30, "*");
     private TalonFX m_indexSecondaryMotor = new TalonFX(31, "*");
 
-    private SmartDashboardNumber mainIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.5);
+    private SmartDashboardNumber mainIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.85);
     private SmartDashboardNumber secondaryIndexSpeed = new SmartDashboardNumber("index/index-secondary-speed", 0.9);
 
     private Index() {
