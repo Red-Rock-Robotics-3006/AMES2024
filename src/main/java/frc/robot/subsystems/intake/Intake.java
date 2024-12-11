@@ -1,9 +1,14 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.Slot2Configs;
+import com.ctre.phoenix6.controls.CoastOut;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -11,22 +16,31 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Utils3006.SmartDashboardNumber;
 
 public class Intake extends SubsystemBase {
     private static Intake instance = null;
 
-    private final TalonFX m_slapLeft = new TalonFX(0); // change motor ID
-    private final TalonFX m_slapRight = new TalonFX(0); // change motor ID
-    private final TalonFX m_intake = new TalonFX(0); // change motor ID
+    private final TalonFX m_slapLeft = new TalonFX(21); // change motor ID
+    private final TalonFX m_slapRight = new TalonFX(22); // change motor ID
+    private final TalonFX m_intake = new TalonFX(20); // change motor ID
 
-    private Slot0Configs pivotSlot0Configs;
-    private Slot0Configs intakeSlot0Configs;
+    private Slot0Configs pivotSlot0Configs = new Slot0Configs();
+    private Slot0Configs intakeSlot0Configs = new Slot0Configs();
 
-    private double stowPosition;
-    private double deployPosition;
-    private double tolerance = 10000; // fix
+    private MotionMagicConfigs pivotMotionConfigs = new MotionMagicConfigs();
+    private MotionMagicConfigs intakeMotionConfigs = new MotionMagicConfigs();
+
+    private SmartDashboardNumber pivotMotionAccel = new SmartDashboardNumber("pivot/pivot-mm-accel", 0);
+    private SmartDashboardNumber pivotMotionVelo = new SmartDashboardNumber("pivot/pivot-mm-velo", 0);
+
+    private SmartDashboardNumber intakeMotionAccel = new SmartDashboardNumber("intake/intake-mm-accel", 0);
+    private SmartDashboardNumber intakeMotionVelo = new SmartDashboardNumber("intake/intake-mm-velo", 0);
 
     private SmartDashboardNumber intakeKs = new SmartDashboardNumber("intake/ks", 0);
     private SmartDashboardNumber intakeKa = new SmartDashboardNumber("intake/ka", 0);
@@ -42,22 +56,33 @@ public class Intake extends SubsystemBase {
     private SmartDashboardNumber pivotKi = new SmartDashboardNumber("pivot/ki", 0);
     private SmartDashboardNumber pivotKd = new SmartDashboardNumber("pivot/kd", 0);
 
+    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", 0);
+
+    private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", 0);
+
+    private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 0);
+    private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 0);
+
+    private SmartDashboardNumber pivotTolerance = new SmartDashboardNumber("pivot/pivot-tolerance", 0.1);
+    private SmartDashboardNumber pivotSpikeThreshold = new SmartDashboardNumber("pivot/pivot-spike-threshold", 0.1);
+
     private Intake() {
         super("Intake");
 
         this.m_slapRight.getConfigurator().apply(
                 new MotorOutputConfigs()
-                        .withInverted(InvertedValue.Clockwise_Positive)
+                        .withInverted(InvertedValue.CounterClockwise_Positive)
                         .withPeakForwardDutyCycle(1d)
                         .withPeakReverseDutyCycle(-1d)
                         .withNeutralMode(NeutralModeValue.Brake));
 
         this.m_slapLeft.getConfigurator().apply(
-                new MotorOutputConfigs()
-                        .withInverted(InvertedValue.CounterClockwise_Positive)
-                        .withPeakForwardDutyCycle(1d)
-                        .withPeakReverseDutyCycle(-1d)
-                        .withNeutralMode(NeutralModeValue.Brake));
+            new MotorOutputConfigs()
+                .withInverted(InvertedValue.Clockwise_Positive)
+                .withPeakForwardDutyCycle(1d)
+                .withPeakReverseDutyCycle(-1d)
+                .withNeutralMode(NeutralModeValue.Brake)
+        );
 
         this.m_intake.getConfigurator().apply(
                 new MotorOutputConfigs()
@@ -82,35 +107,36 @@ public class Intake extends SubsystemBase {
                 .withKI(intakeKi.getNumber())
                 .withKD(intakeKd.getNumber());
 
+        pivotMotionConfigs = new MotionMagicConfigs()
+            .withMotionMagicAcceleration(pivotMotionAccel.getNumber())
+            .withMotionMagicCruiseVelocity(pivotMotionVelo.getNumber());
+
+        intakeMotionConfigs = new MotionMagicConfigs()
+            .withMotionMagicAcceleration(intakeMotionAccel.getNumber())
+            .withMotionMagicCruiseVelocity(intakeMotionVelo.getNumber());
+
         this.m_slapLeft.getConfigurator().apply(pivotSlot0Configs);
         this.m_slapRight.getConfigurator().apply(pivotSlot0Configs);
+        this.m_slapLeft.getConfigurator().apply(pivotMotionConfigs);
+        this.m_slapRight.getConfigurator().apply(pivotMotionConfigs);
         this.m_intake.getConfigurator().apply(intakeSlot0Configs);
+        this.m_intake.getConfigurator().apply(intakeMotionConfigs);
+
+        this.m_slapRight.setControl(new Follower(21, true));
     }
 
-    public void startStow() {
-        this.m_slapRight.setControl(
-            new MotionMagicVoltage(0) // fix
-                .withSlot(0)
-                .withEnableFOC(true)
-                .withOverrideBrakeDurNeutral(false)
-        );
+    public void setStowPosition() {
         this.m_slapLeft.setControl(
-            new MotionMagicVoltage(0) // fix
+            new MotionMagicVoltage(this.pivotStowPosition.getNumber()) // fix
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(false)
         );
     }
 
-    public void startDeploy() {
-        this.m_slapRight.setControl(
-            new MotionMagicVoltage(10000) // fix
-                .withSlot(0)
-                .withEnableFOC(true)
-                .withOverrideBrakeDurNeutral(false)
-        );
+    public void setDeployPosition() {
         this.m_slapLeft.setControl(
-            new MotionMagicVoltage(10000) // fix
+            new MotionMagicVoltage(this.pivotDeployPosition.getNumber()) // fix
                 .withSlot(0)
                 .withEnableFOC(true)
                 .withOverrideBrakeDurNeutral(false)
@@ -118,32 +144,119 @@ public class Intake extends SubsystemBase {
     }
 
     public void enableIntake() {
-        this.m_intake.setControl(new MotionMagicVelocityVoltage(10000) // change
+        this.m_intake.setControl(new MotionMagicVelocityVoltage(intakeSpeed.getNumber()) // change
                 .withSlot(0)
-                .withEnableFOC(true));
+                .withEnableFOC(true)
+                .withOverrideBrakeDurNeutral(true));
     }
 
     public void disableIntake() {
         this.m_intake.setControl(new MotionMagicVelocityVoltage(0) // change
                 .withSlot(0)
-                .withEnableFOC(true));
+                .withEnableFOC(true)
+                .withOverrideBrakeDurNeutral(true));
     }
 
-    public void setPivotMotorSpeeds(double speed) {
-        m_slapLeft.set(speed);
-        m_slapRight.set(speed);
+    public void setNormalizeSpeed() {
+        this.m_slapLeft.setControl(new DutyCycleOut(this.pivotNormalizeSpeed.getNumber()));
+    }
+
+    public void resetPivots() {
+        this.m_slapLeft.setControl(new CoastOut());
+        this.m_slapLeft.setPosition(0);
+        this.m_slapRight.setPosition(0);
     }
 
     public boolean atCurrentSpike() { // TODO
-        return false;
+        return this.m_slapLeft.getTorqueCurrent().getValueAsDouble() > this.pivotSpikeThreshold.getNumber() ||
+                this.m_slapRight.getTorqueCurrent().getValueAsDouble() > this.pivotSpikeThreshold.getNumber();
     }
 
-    public boolean stowed() {
-        return Math.abs(m_slapLeft.getPosition().getValue() - stowPosition) < tolerance && Math.abs(m_slapRight.getPosition().getValue() - stowPosition) < tolerance;
+    @Override
+    public void periodic() {
+        if (pivotKs.hasChanged()
+        || pivotKv.hasChanged()
+        || pivotKp.hasChanged()
+        || pivotKi.hasChanged()
+        || pivotKd.hasChanged()
+        || pivotKa.hasChanged()) {
+            pivotSlot0Configs.kS = pivotKs.getNumber();
+            pivotSlot0Configs.kV = pivotKv.getNumber();
+            pivotSlot0Configs.kP = pivotKp.getNumber();
+            pivotSlot0Configs.kI = pivotKi.getNumber();
+            pivotSlot0Configs.kD = pivotKd.getNumber();
+            pivotSlot0Configs.kA = pivotKa.getNumber();
+
+            if (!Utils.isSimulation()) {this.m_slapLeft.getConfigurator().apply(pivotSlot0Configs); this.m_slapRight.getConfigurator().apply(pivotSlot0Configs);}
+            System.out.println("applyied");
+        }
+
+        if (pivotMotionAccel.hasChanged() || pivotMotionVelo.hasChanged()) {
+            pivotMotionConfigs.MotionMagicAcceleration = pivotMotionAccel.getNumber();
+            pivotMotionConfigs.MotionMagicCruiseVelocity = pivotMotionVelo.getNumber();
+            this.m_slapLeft.getConfigurator().apply(pivotMotionConfigs);
+            this.m_slapRight.getConfigurator().apply(pivotMotionConfigs);
+        }
+
+        if (intakeKs.hasChanged()
+        || intakeKv.hasChanged()
+        || intakeKp.hasChanged()
+        || intakeKi.hasChanged()
+        || intakeKd.hasChanged()
+        || intakeKa.hasChanged()) {
+            intakeSlot0Configs.kS = intakeKs.getNumber();
+            intakeSlot0Configs.kV = intakeKv.getNumber();
+            intakeSlot0Configs.kP = intakeKp.getNumber();
+            intakeSlot0Configs.kI = intakeKi.getNumber();
+            intakeSlot0Configs.kD = intakeKd.getNumber();
+            intakeSlot0Configs.kA = intakeKa.getNumber();
+
+            if (!Utils.isSimulation()) {this.m_slapLeft.getConfigurator().apply(intakeSlot0Configs); this.m_slapRight.getConfigurator().apply(intakeSlot0Configs);}
+            System.out.println("applyied");
+        }
+
+        if (intakeMotionAccel.hasChanged() || intakeMotionVelo.hasChanged()) {
+            this.intakeMotionConfigs.MotionMagicAcceleration = intakeMotionAccel.getNumber();
+            this.intakeMotionConfigs.MotionMagicCruiseVelocity = intakeMotionVelo.getNumber();
+            this.m_intake.getConfigurator().apply(intakeMotionConfigs);
+        }
+
+        SmartDashboard.putNumber("intake/intake-left-position", m_slapLeft.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("intake/intake-right-position", m_slapRight.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("intake/intake-left-spike", m_slapLeft.getTorqueCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("intake/intake-right-spike", m_slapRight.getTorqueCurrent().getValueAsDouble());
+
     }
 
-    public boolean deployed() {
-        return Math.abs(m_slapLeft.getPosition().getValue() - deployPosition) < tolerance && Math.abs(m_slapRight.getPosition().getValue() - deployPosition) < tolerance;
+    public Command enableIntakeCommand() {
+        return Commands.runOnce(
+            () -> this.enableIntake(), this
+        );
+    }
+
+    public Command disableIntakeCommand() {
+        return Commands.runOnce(
+            () -> this.disableIntake(), this
+        );
+    }
+
+    public Command setStowPositionCommand() {
+        return Commands.runOnce(
+            this::setStowPosition, this
+        );
+    }
+
+    public Command setDeployPositionCommand() {
+        return Commands.runOnce(
+            this::setDeployPosition, this);
+    }
+
+    public Command normalizePivotCommand() {
+        return new FunctionalCommand(
+            () -> this.setNormalizeSpeed(), 
+            () -> {}, 
+            (interrupted) -> this.resetPivots(), 
+            () -> this.atCurrentSpike(), this);
     }
 
     public static Intake getInstance() {

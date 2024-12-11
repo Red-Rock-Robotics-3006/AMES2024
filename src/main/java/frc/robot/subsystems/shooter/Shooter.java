@@ -29,15 +29,15 @@ public class Shooter extends SubsystemBase{
     public static double kMaxHoodRotation, 
                          kMinHoodRotation;
 
-    private TalonFX m_shooterMotor = new TalonFX(39);
-    private TalonFX m_hoodMotor = new TalonFX(38);
+    private TalonFX m_shooterMotor = new TalonFX(50);
+    private TalonFX m_hoodMotor = new TalonFX(51);
 
     private Slot0Configs shooterSlot0Configs = new Slot0Configs();
     private Slot0Configs hoodSlot0Configs = new Slot0Configs();
 
     private MotionMagicConfigs shooterMotionMagicConfigs = new MotionMagicConfigs();
 
-    private SmartDashboardNumber shooterAccel = new SmartDashboardNumber("shooter/accel-motion-magic", 100);
+    private SmartDashboardNumber shooterAccel = new SmartDashboardNumber("shooter/shooter-accel-motion-magic", 100);
 
     private SmartDashboardNumber shooterKs = new SmartDashboardNumber("shooter/ks", 0);
     private SmartDashboardNumber shooterKa = new SmartDashboardNumber("shooter/ka", 0);
@@ -205,9 +205,9 @@ public class Shooter extends SubsystemBase{
             this.m_shooterMotor.getConfigurator().apply(shooterMotionMagicConfigs);
         }
 
-        SmartDashboard.putNumber("shooter/acceleration", this.m_shooterMotor.getAcceleration().getValueAsDouble());
-        SmartDashboard.putNumber("shooter/velocity", this.m_shooterMotor.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("shooter/rpm-target", this.targetRPM);
+        SmartDashboard.putNumber("shooter/shooter-acceleration", this.m_shooterMotor.getAcceleration().getValueAsDouble());
+        SmartDashboard.putNumber("shooter/shooter-velocity", this.m_shooterMotor.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("shooter/shooter-rpm-target", this.targetRPM);
 
         if (hoodKs.hasChanged()
             || hoodKv.hasChanged()
@@ -226,8 +226,10 @@ public class Shooter extends SubsystemBase{
             System.out.println("applyied");
         }
 
-        SmartDashboard.putNumber("hood/position", this.m_hoodMotor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("hood/hood-position", this.m_hoodMotor.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("hood/hood-target-angle", this.targetHoodAngle);
+        SmartDashboard.putNumber("hood/hood-torque-current", this.m_hoodMotor.getTorqueCurrent().getValueAsDouble());
+        SmartDashboard.putBoolean("hood/hood-at-spike", this.inSpikeCurrent());
 
         if (this.autoAimEnabled) {
             if (this.onBlue) this.aimToTargetBlue();

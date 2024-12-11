@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.index.Index;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
@@ -47,18 +49,60 @@ public class RobotContainer {
 
   private Shooter shooter = Shooter.getInstance();
   private Turret turret = Turret.getInstance();
+  private Intake intake = Intake.getInstance();
+  private Index index = Index.getInstance();
 
   private void configureBindings() {
     this.configureSwerveBindings();
 
+    // RobotModeTriggers.teleop().onTrue(
+    //   Commands.parallel(
+    //     shooter.normalizeHoodCommand(),
+    //     turret.normalizeTurretCommand()
+    //   )
+    // );
+
+    mechstick.a().onTrue(
+      turret.normalizeTurretCommand()
+    );
+
+    mechstick.b().onTrue(
+      shooter.normalizeHoodCommand()
+    );
+
+    mechstick.x().onTrue(
+      intake.normalizePivotCommand()
+    );
+
+    mechstick.povUp().onTrue(
+      Commands.runOnce(
+        () -> {shooter.setFenderShotState(); turret.setTurretPosition(new Rotation2d());}, 
+        shooter, turret)
+    );
+
+    mechstick.leftBumper().onTrue(
+      Commands.runOnce(
+        () -> {index.startMainIndex(); index.startSecondaryIndex();}, index)
+    );
+
+    mechstick.rightBumper().onTrue(
+      Commands.runOnce(
+        () -> {index.stopMainIndex(); index.stopSecondaryIndex();}, index)
+    );
+  }
+
+  private void configureMechBindings() {
     RobotModeTriggers.teleop().onTrue(
       Commands.parallel(
         shooter.normalizeHoodCommand(),
-        turret.normalizeTurretCommand()
+        turret.normalizeTurretCommand(),
+        intake.normalizePivotCommand()
       )
     );
 
-    
+    // drivestick.a().onTrue(
+      
+    // )
   }
 
   private void configureSwerveBindings() {

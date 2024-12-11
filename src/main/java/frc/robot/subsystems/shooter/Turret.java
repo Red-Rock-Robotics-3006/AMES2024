@@ -34,13 +34,13 @@ public class Turret extends SubsystemBase{
     public static final double kMinTurretRotation = 0;
     public static final Rotation2d kMinTurretAngle = new Rotation2d();
 
-    private TalonFX m_turretMotor = new TalonFX(35);
+    private TalonFX m_turretMotor = new TalonFX(40);
 
     private Slot0Configs slot0Configs = new Slot0Configs();
     private MotionMagicConfigs motionConfigs = new MotionMagicConfigs();
 
-    private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/motion-accel", 0);
-    private SmartDashboardNumber kTurretVel = new SmartDashboardNumber("turret/motion-velocity", 0);
+    private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/turret-motion-accel", 0);
+    private SmartDashboardNumber kTurretVel = new SmartDashboardNumber("turret/turret-motion-velocity", 0);
 
     private SmartDashboardNumber turretKs = new SmartDashboardNumber("turret/ks", 0);
     private SmartDashboardNumber turretKa = new SmartDashboardNumber("turret/ka", 0);
@@ -49,11 +49,11 @@ public class Turret extends SubsystemBase{
     private SmartDashboardNumber turretKi = new SmartDashboardNumber("turret/ki", 0);
     private SmartDashboardNumber turretKd = new SmartDashboardNumber("turret/kd", 0);
 
-    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("turret/spike-threshold", 0);
+    private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("turret/turret-spike-threshold", 0);
     private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("turret/normalize-reset-speed", 0.1);
 
-    private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("turret/pid-Tolerance", 0.1);
-    private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("turret/position-tolerance", 0.1);
+    private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("turret/turret-pid-Tolerance", 0.1);
+    private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("turret/turret-position-tolerance", 0.1);
 
     private boolean autoAimEnabled = false;
     private DriverStation.Alliance alliance;
@@ -67,7 +67,7 @@ public class Turret extends SubsystemBase{
 
         this.m_turretMotor.getConfigurator().apply(
             new MotorOutputConfigs()
-                .withInverted(InvertedValue.Clockwise_Positive)
+                .withInverted(InvertedValue.CounterClockwise_Positive)
                 .withPeakForwardDutyCycle(1d)
                 .withPeakReverseDutyCycle(1d)
                 .withNeutralMode(NeutralModeValue.Brake)
@@ -156,11 +156,13 @@ public class Turret extends SubsystemBase{
             this.m_turretMotor.getConfigurator().apply(this.motionConfigs);
         }
 
-        SmartDashboard.putNumber("turret/acceleration", this.m_turretMotor.getAcceleration().getValueAsDouble());
-        SmartDashboard.putNumber("turret/velocity", this.m_turretMotor.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("turret/position", this.m_turretMotor.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("turret/motor-torque-current", this.m_turretMotor.getTorqueCurrent().getValueAsDouble());
-        SmartDashboard.putNumber("turret/closed-loop-error", this.m_turretMotor.getClosedLoopError().getValueAsDouble());
+        SmartDashboard.putNumber("turret/turret-acceleration", this.m_turretMotor.getAcceleration().getValueAsDouble());
+        SmartDashboard.putNumber("turret/turret-velocity", this.m_turretMotor.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("turret/turret-position", this.m_turretMotor.getPosition().getValueAsDouble());
+        SmartDashboard.putNumber("turret/turret-motor-torque-current", this.m_turretMotor.getTorqueCurrent().getValueAsDouble());
+        SmartDashboard.putNumber("turret/turret-closed-loop-error", this.m_turretMotor.getClosedLoopError().getValueAsDouble());
+
+        SmartDashboard.putBoolean("turret/turret-at-spike", this.inSpikeCurrent());
 
         if (this.autoAimEnabled) {
             if (this.alliance == DriverStation.Alliance.Blue) aimToTargetBlue();
