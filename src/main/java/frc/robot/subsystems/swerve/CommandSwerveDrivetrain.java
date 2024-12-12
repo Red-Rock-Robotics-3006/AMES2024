@@ -98,6 +98,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         this.rotateP = new SmartDashboardNumber("dt/heading p", kRotateP);
         this.rotateI = new SmartDashboardNumber("dt/heading i", kRotateI);
         this.rotateD = new SmartDashboardNumber("dt/heading d", kRotateD);
+
+        this.configurePathPlanner();
     }
 
     private void configurePathPlanner() {

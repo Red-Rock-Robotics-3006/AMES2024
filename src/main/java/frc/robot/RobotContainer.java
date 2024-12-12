@@ -11,6 +11,8 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -52,6 +54,8 @@ public class RobotContainer {
   private Turret turret = Turret.getInstance();
   private Intake intake = Intake.getInstance();
   private Index index = Index.getInstance();
+
+  private SendableChooser<Command> m_chooser = new SendableChooser<>();
 
   private void configureBindings() {
     this.configureSwerveBindings();
@@ -210,9 +214,19 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 
+  private void configureSelector() {
+    m_chooser.setDefaultOption("NO AUTO", Commands.print("womp womp lmao"));
+
+    m_chooser.addOption("TESTAUTO1", Autos.m_testAuto1());
+    m_chooser.addOption("TESTAUTO1 PATHS", Autos.m_testAuto1Path());
+
+    SmartDashboard.putData("Auto Chooser", m_chooser);
+  }
+
   public RobotContainer() {
     drivetrain.setSwerveRequest(this.driveFacingAngle);
     configureBindings();
+    configureSelector();
   }
 
   public void loop(){
@@ -227,7 +241,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return m_chooser.getSelected();
   }
-
 }

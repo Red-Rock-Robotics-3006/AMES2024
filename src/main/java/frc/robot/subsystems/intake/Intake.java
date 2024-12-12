@@ -185,7 +185,7 @@ public class Intake extends SubsystemBase {
             pivotSlot0Configs.kA = pivotKa.getNumber();
 
             if (!Utils.isSimulation()) {this.m_slapLeft.getConfigurator().apply(pivotSlot0Configs); this.m_slapRight.getConfigurator().apply(pivotSlot0Configs);}
-            System.out.println("applyied");
+            System.out.println("applied");
         }
 
         if (pivotMotionAccel.hasChanged() || pivotMotionVelo.hasChanged()) {
@@ -209,7 +209,7 @@ public class Intake extends SubsystemBase {
             intakeSlot0Configs.kA = intakeKa.getNumber();
 
             if (!Utils.isSimulation()) this.m_intake.getConfigurator().apply(intakeSlot0Configs);
-            System.out.println("applyied");
+            System.out.println("applied");
         }
 
         if (intakeMotionAccel.hasChanged()) {
