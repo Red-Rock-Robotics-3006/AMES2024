@@ -29,6 +29,8 @@ import frc.robot.subsystems.shooter.Turret;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 public class RobotContainer {
+  private static RobotContainer instance = null;
+
   private double MaxSpeed = CommandSwerveDrivetrain.kDriveMaxSpeed; // kSpeedAt12VoltsMps desired top speed
   private double MaxAngularRate = CommandSwerveDrivetrain.kTurnMaxSpeed; // 3/4 of a rotation per second max angular velocity
 
@@ -116,6 +118,8 @@ public class RobotContainer {
     mechstick.a().onTrue(index.startMainIndexCommand());
     mechstick.b().onTrue(index.stopMainIndexCommand());
     mechstick.y().onTrue(intake.normalizePivotCommand());
+
+    SmartDashboard.putNumber("autos/wait time", 6.5);
   }
 
   private void configureMechBindings() {
@@ -223,6 +227,10 @@ public class RobotContainer {
     SmartDashboard.putData("Auto Chooser", m_chooser);
   }
 
+  public double getAutoWaitTime() {
+    return SmartDashboard.getNumber("autos/wait time", 0);
+  }
+
   public RobotContainer() {
     drivetrain.setSwerveRequest(this.driveFacingAngle);
     configureBindings();
@@ -242,5 +250,10 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return m_chooser.getSelected();
+  }
+
+  public static RobotContainer getInstance() {
+    if (instance == null) instance = new RobotContainer();
+    return instance;
   }
 }

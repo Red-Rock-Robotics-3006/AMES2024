@@ -18,6 +18,7 @@ public class Autos {
     private static Turret turret = Turret.getInstance();
     private static Intake intake = Intake.getInstance();
     private static Index index = Index.getInstance();
+    private static RobotContainer robotContainer = RobotContainer.getInstance();
 
     public static Command m_testAuto1Path() {
         return swerve.getAuto("TestAuto1");
@@ -31,6 +32,16 @@ public class Autos {
             swerve.getAuto("TestAuto1"),
             // new WaitCommand(5),
             new InstantCommand(() -> {index.startSecondaryIndex();})
+        );
+    }
+
+    public static Command m_leaveShootAuto1() {
+        return new SequentialCommandGroup(
+            index.startMainIndexCommand(),
+            new InstantCommand(() -> shooter.setRequestedRPM()),
+            swerve.getAuto(""),
+            new WaitCommand(robotContainer.getAutoWaitTime()),
+            swerve.getAuto("")
         );
     }
 }
