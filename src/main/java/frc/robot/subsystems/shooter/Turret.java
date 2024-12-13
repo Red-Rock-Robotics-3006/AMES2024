@@ -1,6 +1,7 @@
 package frc.robot.subsystems.shooter;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -35,6 +36,12 @@ public class Turret extends SubsystemBase{
 
     private Slot0Configs slot0Configs = new Slot0Configs();
     private MotionMagicConfigs motionConfigs = new MotionMagicConfigs();
+
+    private CurrentLimitsConfigs turretCurrentLimitsConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
 
     private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/turret-motion-accel", 40);
     private SmartDashboardNumber kTurretVel = new SmartDashboardNumber("turret/turret-motion-velocity", 40);
@@ -84,6 +91,7 @@ public class Turret extends SubsystemBase{
 
         this.m_turretMotor.getConfigurator().apply(slot0Configs);
         this.m_turretMotor.getConfigurator().apply(motionConfigs);
+        this.m_turretMotor.getConfigurator().apply(turretCurrentLimitsConfigs);
     }
 
     public void setTurretPosition(Rotation2d angle) {

@@ -1,5 +1,6 @@
 package frc.robot.subsystems.index;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -16,9 +17,22 @@ public class Index extends SubsystemBase{
     private TalonFX m_indexMainMotor = new TalonFX(30, "*");
     private TalonFX m_indexSecondaryMotor = new TalonFX(31, "*");
 
-    private SmartDashboardNumber mainIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.85);
+    private SmartDashboardNumber mainIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.15);
     private SmartDashboardNumber secondaryIndexSpeed = new SmartDashboardNumber("index/index-secondary-speed", 0.9);
 
+    private CurrentLimitsConfigs mainIndexCurrentLimitsConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
+
+    private CurrentLimitsConfigs secondaryIndexCurrentLimitsConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
+
+    
     private Index() {
         super("index");
 
@@ -37,6 +51,9 @@ public class Index extends SubsystemBase{
                 .withPeakReverseDutyCycle(-1d)
                 .withNeutralMode(NeutralModeValue.Brake)
         );
+
+        this.m_indexMainMotor.getConfigurator().apply(mainIndexCurrentLimitsConfigs);
+        this.m_indexSecondaryMotor.getConfigurator().apply(secondaryIndexCurrentLimitsConfigs);
     }
 
     public void startMainIndex() {

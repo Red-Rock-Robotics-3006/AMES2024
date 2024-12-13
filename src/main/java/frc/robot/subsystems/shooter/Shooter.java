@@ -4,6 +4,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -37,6 +38,18 @@ public class Shooter extends SubsystemBase{
 
     private MotionMagicConfigs shooterMotionMagicConfigs = new MotionMagicConfigs();
     private MotionMagicConfigs hoodMotionMagicConfigs = new MotionMagicConfigs();
+
+    private CurrentLimitsConfigs shooterCurrentLimitsConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
+
+    private CurrentLimitsConfigs hoodCurrentLimitsConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
 
     private SmartDashboardNumber shooterAccel = new SmartDashboardNumber("shooter/shooter-accel-motion-magic", 75);
 
@@ -125,11 +138,14 @@ public class Shooter extends SubsystemBase{
 
         this.m_shooterMotor.getConfigurator().apply(shooterSlot0Configs);
         this.m_shooterMotor.getConfigurator().apply(shooterMotionMagicConfigs);
+        this.m_shooterMotor.getConfigurator().apply(shooterCurrentLimitsConfigs);
         this.m_hoodMotor.getConfigurator().apply(hoodSlot0Configs);
+        this.m_hoodMotor.getConfigurator().apply(hoodMotionMagicConfigs);
+        this.m_hoodMotor.getConfigurator().apply(hoodCurrentLimitsConfigs);
     }
 
     public void setHoodAngle(double angle) {
-        this.m_hoodMotor.setControl(new MotionMagicVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinHoodRotation, kMaxHoodRotation))
+        this.m_hoodMotor.setControl(new MotionMagicVoltage(MathUtil.clamp(this.angleToRotation(angle), kMinHoodRotation + 0.07, kMaxHoodRotation))
                                         .withSlot(0)
                                         .withEnableFOC(true)
                                         .withOverrideBrakeDurNeutral(true)

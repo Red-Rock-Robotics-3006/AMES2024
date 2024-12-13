@@ -18,12 +18,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Utils3006.SmartDashboardBoolean;
 import frc.robot.Utils3006.SmartDashboardNumber;
 import frc.robot.subsystems.swerve.generated.TunerConstants;
 import frc.robot.vision.LimelightHelpers;
@@ -73,6 +75,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     private final SwerveRequest.ApplyChassisSpeeds autoRequest = new SwerveRequest.ApplyChassisSpeeds();
 
+    private SmartDashboardNumber kRejectionDistance = new SmartDashboardNumber("localization/rejection-distance", 3);
+    private SmartDashboardNumber kRejectionRotationRate = new SmartDashboardNumber("localization/rejection-rotation-rate", 3);
+
+    private SmartDashboardBoolean visionEnabled = new SmartDashboardBoolean("localization/vision-enabled", false);
+
+    private Field2d field = new Field2d();
+
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(driveTrainConstants, OdometryUpdateFrequency, modules);
         if (Utils.isSimulation()) {
@@ -99,7 +108,17 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         this.rotateI = new SmartDashboardNumber("dt/heading i", kRotateI);
         this.rotateD = new SmartDashboardNumber("dt/heading d", kRotateD);
 
+        SmartDashboard.putData("dt/dt-field", this.field);
+
         this.configurePathPlanner();
+
+        this.seedFieldRelative(
+            new Pose2d(
+                this.getPose().getX(),
+                this.getPose().getY(),
+                new Rotation2d()
+            )
+        );
     }
 
     private void configurePathPlanner() {
@@ -184,18 +203,27 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         SmartDashboard.putBoolean("dt/using heading pid", this.enableHeadingPID);
         SmartDashboard.putNumber("dt/current heading", this.getHeadingDegrees());
         SmartDashboard.putNumber("dt/target heading", this.getTargetHeadingDegrees());
+
+        this.field.setRobotPose(this.getPose());
+
+        if (visionEnabled.getValue()) updateVisionMeasurements();
     }
 
-    // public void updateVisionMeasurements() {
-    //     for (LimelightHelpers.PoseEstimate estimate : Localization.getPoseEstimates(this.getHeadingDegrees())) {
-    //         if (poseEstimateIsValid(estimate)) {
-    //             // this.
-    //         }
-    //     }
-    // }
+    public void updateVisionMeasurements() {
+        for (Localization.LimeLightPoseEstimateWrapper estimateWrapper : Localization.getPoseEstimates(this.getHeadingDegrees())) {
+            if (estimateWrapper.tiv && poseEstimateIsValid(estimateWrapper.poseEstimate)) {
+                this.addVisionMeasurement(estimateWrapper.poseEstimate.pose,
+                                        estimateWrapper.poseEstimate.timestampSeconds, 
+                                        estimateWrapper.getStdvs(estimateWrapper.poseEstimate.avgTagDist));
+                estimateWrapper.field.setRobotPose(
+                    estimateWrapper.poseEstimate.pose
+                );
+            }
+        }
+    }
 
     private boolean poseEstimateIsValid(LimelightHelpers.PoseEstimate e) {
-        return true;
+        return e.avgTagDist < kRejectionDistance.getNumber() && Math.abs(this.getRotationRateDegrees()) < kRejectionRotationRate.getNumber();
     }
 
     public Command resetHeadingCommand(){
@@ -276,6 +304,10 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
      */
     public double[] getHeadingPIDCoeffs(){
         return new double[]{this.rotateP.getNumber(), this.rotateI.getNumber(), this.rotateD.getNumber()};
+    }
+
+    public double getRotationRateDegrees() {
+        return this.getPigeon2().getRate();
     }
 
     public static CommandSwerveDrivetrain getInstance(){

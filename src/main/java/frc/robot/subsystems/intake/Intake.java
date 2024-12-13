@@ -1,9 +1,11 @@
 package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
@@ -33,6 +35,18 @@ public class Intake extends SubsystemBase {
     private MotionMagicConfigs pivotMotionConfigs = new MotionMagicConfigs();
     private MotionMagicConfigs intakeMotionConfigs = new MotionMagicConfigs();
 
+    private CurrentLimitsConfigs intakeCurrentLimitConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
+
+    private CurrentLimitsConfigs pivotCurrentLimitsConfigs = new CurrentLimitsConfigs()
+            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120)
+            .withStatorCurrentLimitEnable(true);
+
     private SmartDashboardNumber pivotMotionAccel = new SmartDashboardNumber("pivot/pivot-mm-accel", 175);
     private SmartDashboardNumber pivotMotionVelo = new SmartDashboardNumber("pivot/pivot-mm-velo", 75);
 
@@ -52,12 +66,12 @@ public class Intake extends SubsystemBase {
     private SmartDashboardNumber pivotKi = new SmartDashboardNumber("pivot/ki", 0);
     private SmartDashboardNumber pivotKd = new SmartDashboardNumber("pivot/kd", 0);
 
-    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", -2700);
+    private SmartDashboardNumber intakeSpeed = new SmartDashboardNumber("intake/intake-speed", -3200);
 
     private SmartDashboardNumber pivotNormalizeSpeed = new SmartDashboardNumber("pivot/pivot-normalize-speed", -0.1);
 
-    private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 0.35);
-    private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 28.3);
+    private SmartDashboardNumber pivotStowPosition = new SmartDashboardNumber("pivot/pivot-stow-position", 1.5);
+    private SmartDashboardNumber pivotDeployPosition = new SmartDashboardNumber("pivot/pivot-deploy-position", 28.6);
 
     private SmartDashboardNumber pivotTolerance = new SmartDashboardNumber("pivot/pivot-tolerance", 0.1);
     private SmartDashboardNumber pivotSpikeThreshold = new SmartDashboardNumber("pivot/pivot-spike-threshold", 10);
@@ -115,8 +129,11 @@ public class Intake extends SubsystemBase {
         this.m_slapRight.getConfigurator().apply(pivotSlot0Configs);
         this.m_slapLeft.getConfigurator().apply(pivotMotionConfigs);
         this.m_slapRight.getConfigurator().apply(pivotMotionConfigs);
+        this.m_slapLeft.getConfigurator().apply(pivotCurrentLimitsConfigs);
+        this.m_slapRight.getConfigurator().apply(pivotCurrentLimitsConfigs);
         this.m_intake.getConfigurator().apply(intakeSlot0Configs);
         this.m_intake.getConfigurator().apply(intakeMotionConfigs);
+        this.m_intake.getConfigurator().apply(intakeCurrentLimitConfigs);
 
         this.m_slapRight.setControl(new Follower(21, true));
     }
