@@ -37,7 +37,7 @@ import frc.robot.vision.Localization;
  */
 public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsystem {
     public static final double kDriveMaxSpeed = 6;
-    public static final double kTurnMaxSpeed = 1.5;
+    public static final double kTurnMaxSpeed = 3;
 
     public static final double kRotationOmegaSignificance = 1;
 
@@ -78,7 +78,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private SmartDashboardNumber kRejectionDistance = new SmartDashboardNumber("localization/rejection-distance", 3);
     private SmartDashboardNumber kRejectionRotationRate = new SmartDashboardNumber("localization/rejection-rotation-rate", 3);
 
-    private SmartDashboardBoolean visionEnabled = new SmartDashboardBoolean("localization/vision-enabled", false);
+    private SmartDashboardBoolean visionEnabled = new SmartDashboardBoolean("localization/vision-enabled", true);
 
     private Field2d field = new Field2d();
 
