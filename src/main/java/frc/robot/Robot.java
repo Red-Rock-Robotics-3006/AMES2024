@@ -17,7 +17,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     m_robotContainer = RobotContainer.getInstance();
-    // Localization.initialize();
+    Localization.initialize();
   }
 
   @Override

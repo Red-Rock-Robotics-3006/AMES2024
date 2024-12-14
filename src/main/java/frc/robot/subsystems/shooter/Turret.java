@@ -186,25 +186,23 @@ public class Turret extends SubsystemBase{
     }
 
     private void aimToTargetRed() {
-        this.setTurretPosition(
-            Localization.getAngleToRed().minus(
-                Localization.getPose2d().getRotation()
-            )
+        Rotation2d angle = Localization.getPose2d().getRotation().minus(
+            Localization.getAngleToRed()
         );
+        this.setTurretPosition(new Rotation2d(angle.getRadians()));
     }
 
     private void aimToTargetBlue() {
-        Rotation2d angle = Localization.getAngleToBlue().minus(
-                Localization.getPose2d().getRotation()
-            );
-        
+        Rotation2d angle = Localization.getPose2d().getRotation().minus(
+            Localization.getAngleToBlue()
+        );
+
+        // TODO tester code, delete once confirmed good
         SmartDashboard.putNumber("Angle", angle.getDegrees());
         SmartDashboard.putNumber("Angle to Blue", Localization.getAngleToBlue().getDegrees());
         SmartDashboard.putNumber("Robot Yaw", Localization.getPose2d().getRotation().getDegrees());
 
-        this.setTurretPosition(
-            new Rotation2d(-angle.getRadians())
-        );
+        this.setTurretPosition(new Rotation2d(angle.getRadians()));
     }
 
     public Command normalizeTurretCommand() {

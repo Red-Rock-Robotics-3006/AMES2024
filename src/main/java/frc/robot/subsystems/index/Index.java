@@ -18,6 +18,7 @@ public class Index extends SubsystemBase{
     private TalonFX m_indexSecondaryMotor = new TalonFX(31, "*");
 
     private SmartDashboardNumber mainIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.15);
+    private SmartDashboardNumber acceleratedIndexSpeed = new SmartDashboardNumber("index/index-main-speed", 0.6);
     private SmartDashboardNumber secondaryIndexSpeed = new SmartDashboardNumber("index/index-secondary-speed", 0.9);
 
     private CurrentLimitsConfigs mainIndexCurrentLimitsConfigs = new CurrentLimitsConfigs()
@@ -59,6 +60,10 @@ public class Index extends SubsystemBase{
     public void startMainIndex() {
         this.m_indexMainMotor.setControl(new DutyCycleOut(mainIndexSpeed.getNumber()));
     }
+    
+    public void accelerateMainIndex() {
+        this.m_indexMainMotor.setControl(new DutyCycleOut(acceleratedIndexSpeed.getNumber()));
+    }
 
     public void stopMainIndex() {
         this.m_indexMainMotor.setControl(new DutyCycleOut(0));
@@ -74,6 +79,10 @@ public class Index extends SubsystemBase{
 
     public Command startMainIndexCommand() {
         return Commands.runOnce(this::startMainIndex, this);
+    }
+
+    public Command accelerateMainIndexCommand() {
+        return Commands.runOnce(this::accelerateMainIndex, this);
     }
 
     public Command stopMainIndexCommand() {

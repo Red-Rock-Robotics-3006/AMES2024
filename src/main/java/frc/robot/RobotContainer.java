@@ -151,7 +151,9 @@ public class RobotContainer {
     drivestick.y().onTrue(new InstantCommand(() -> {shooter.disableAutoAim();turret.disableAutoAim(); shooter.setLowShotState(); turret.setTurretPosition(new Rotation2d());}, shooter, turret));
 
     drivestick.leftBumper().onTrue(new InstantCommand(() -> {shooter.enableAutoAim(); turret.enableAutoAim();}, shooter, turret));
-
+    drivestick.rightBumper()
+      .onTrue(index.accelerateMainIndexCommand())
+      .onFalse(index.startMainIndexCommand());
     
   }
 
