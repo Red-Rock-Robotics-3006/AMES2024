@@ -7,6 +7,7 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.ForwardReference;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
@@ -37,7 +38,7 @@ import frc.robot.vision.Localization;
  */
 public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsystem {
     public static final double kDriveMaxSpeed = 6;
-    public static final double kTurnMaxSpeed = 1.5;
+    public static final double kTurnMaxSpeed = 3;
 
     public static final double kRotationOmegaSignificance = 1;
 
@@ -66,6 +67,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
     /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
     private final Rotation2d RedAlliancePerspectiveRotation = Rotation2d.fromDegrees(180);
+    // private final Rotation2d RedAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
+
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean hasAppliedOperatorPerspective = false;
 
@@ -78,7 +81,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private SmartDashboardNumber kRejectionDistance = new SmartDashboardNumber("localization/rejection-distance", 3);
     private SmartDashboardNumber kRejectionRotationRate = new SmartDashboardNumber("localization/rejection-rotation-rate", 3);
 
-    private SmartDashboardBoolean visionEnabled = new SmartDashboardBoolean("localization/vision-enabled", false);
+    private SmartDashboardBoolean visionEnabled = new SmartDashboardBoolean("localization/vision-enabled", true);
 
     private Field2d field = new Field2d();
 
@@ -150,6 +153,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     public void setSwerveRequest(SwerveRequest.FieldCentricFacingAngle request){
         this.angleRequest = request;
+        // this.angleRequest.ForwardReference = ForwardReference.RedAlliance;
         angleRequest.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
@@ -203,6 +207,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         SmartDashboard.putBoolean("dt/using heading pid", this.enableHeadingPID);
         SmartDashboard.putNumber("dt/current heading", this.getHeadingDegrees());
         SmartDashboard.putNumber("dt/target heading", this.getTargetHeadingDegrees());
+
+        SmartDashboard.putBoolean("dt/hasAPpliedOperatorPerspectrive", hasAppliedOperatorPerspective);
 
         this.field.setRobotPose(this.getPose());
 

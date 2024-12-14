@@ -59,7 +59,7 @@ public class Turret extends SubsystemBase{
     private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("turret/turret-pid-Tolerance", 0.1);
     private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("turret/turret-position-tolerance", 0.1);
 
-    private boolean autoAimEnabled = false;
+    private boolean autoAimEnabled = true;
     private DriverStation.Alliance alliance;
 
     private double nonClampedTargetRevolution;
@@ -194,10 +194,16 @@ public class Turret extends SubsystemBase{
     }
 
     private void aimToTargetBlue() {
-        this.setTurretPosition(
-            Localization.getAngleToBlue().minus(
+        Rotation2d angle = Localization.getAngleToBlue().minus(
                 Localization.getPose2d().getRotation()
-            )
+            );
+        
+        SmartDashboard.putNumber("Angle", angle.getDegrees());
+        SmartDashboard.putNumber("Angle to Blue", Localization.getAngleToBlue().getDegrees());
+        SmartDashboard.putNumber("Robot Yaw", Localization.getPose2d().getRotation().getDegrees());
+
+        this.setTurretPosition(
+            new Rotation2d(-angle.getRadians())
         );
     }
 

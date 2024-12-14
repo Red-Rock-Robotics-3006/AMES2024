@@ -14,8 +14,8 @@ import frc.robot.Utils3006.SmartDashboardNumber;
 import frc.robot.subsystems.swerve.CommandSwerveDrivetrain;
 
 public class Localization {
-    public static final Pose2d redCliffPose = new Pose2d();
-    public static final Pose2d blueCliffPose = new Pose2d();
+    public static final Pose2d redCliffPose = new Pose2d(15.468,2.321, new Rotation2d());
+    public static final Pose2d blueCliffPose = new Pose2d(15.468,5.604, new Rotation2d());
 
     private static int[] validIDs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     private static String[] limeLightNames = {"limelight-left", "limelight-right"};
@@ -29,6 +29,8 @@ public class Localization {
     private static SmartDashboardNumber kStdvDemoninator = new SmartDashboardNumber("localization/stdv-denom-scale", 30);
 
     public static void initialize() {
+        if(wrappers != null)
+            return;
         wrappers = new LimeLightPoseEstimateWrapper[limeLightNames.length];
         for (int i = 0; i < limeLightNames.length; i++) {
             wrappers[i] = new LimeLightPoseEstimateWrapper().withName(limeLightNames[i]);
@@ -37,8 +39,12 @@ public class Localization {
     }
 
     public static LimeLightPoseEstimateWrapper[] getPoseEstimates(double headingDegrees) {
-        int i = 0;
-        for (String s : limeLightNames) {
+        // int i = 0;
+        // for (String s : limeLightNames) {
+        if(wrappers == null)
+            initialize();
+        for(int i = 0; i < limeLightNames.length; i++){
+        String s = limeLightNames[i];
             LimelightHelpers.SetRobotOrientation(s, headingDegrees, CommandSwerveDrivetrain.getInstance().getRotationRateDegrees(), 0, 0, 0, 0);
             wrappers[i].withPoseEstimate(LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(s))
                         .withTagInVision(LimelightHelpers.getTV(s));
@@ -77,7 +83,7 @@ public class Localization {
         public LimelightHelpers.PoseEstimate poseEstimate;
         public String name;
         public boolean tiv;
-        private SmartDashboardNumber[] kStdvs;
+        private SmartDashboardNumber[] kStdvs = new SmartDashboardNumber[3];
         public Field2d field = new Field2d();
 
         public Matrix<N3, N1> getStdvs(double distanceToTarget) {
