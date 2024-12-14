@@ -163,6 +163,13 @@ public class Intake extends SubsystemBase {
                 .withOverrideBrakeDurNeutral(true));
     }
 
+    public void reverseIntake() {
+        this.m_intake.setControl(new MotionMagicVelocityVoltage(-intakeSpeed.getNumber() / 60d) // change
+                .withSlot(0)
+                .withEnableFOC(true)
+                .withOverrideBrakeDurNeutral(true));
+    }
+
     public void disableIntake() {
         this.m_intake.setControl(new MotionMagicVelocityVoltage(0) // change
                 .withSlot(0)
@@ -247,6 +254,12 @@ public class Intake extends SubsystemBase {
     public Command enableIntakeCommand() {
         return Commands.runOnce(
             () -> this.enableIntake(), this
+        );
+    }
+
+    public Command reverseIntakeCommand() {
+        return Commands.runOnce(
+            () -> this.reverseIntake(), this
         );
     }
 

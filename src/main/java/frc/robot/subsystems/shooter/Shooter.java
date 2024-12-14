@@ -76,11 +76,13 @@ public class Shooter extends SubsystemBase{
     private SmartDashboardNumber lowAngle = new SmartDashboardNumber("low shot angle", 85);
     private SmartDashboardNumber lowRPM = new SmartDashboardNumber("low shot rpm", 1000);
 
+    private SmartDashboardNumber reverseRPM = new SmartDashboardNumber("reverse shot rpm", -750);
+
     private SmartDashboardNumber spikeThreshold = new SmartDashboardNumber("hood/hood-spike-threshold", 10.5);
     private SmartDashboardNumber normalizeSpeed = new SmartDashboardNumber("hood/hood-normalize-speed", -0.05);
 
     private SmartDashboardNumber pidTolerance = new SmartDashboardNumber("hood/hood-pid-tolerance", 0.1);
-    private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("hood/hood-position-tolerance", 0.1);
+    private SmartDashboardNumber positionTolerance = new SmartDashboardNumber("hood/hood-position-tolerance", 0.1);//gyatt good googly moogly
 
     private double nonClampedTargetRevolution;
     private double requestedRPM;
@@ -156,15 +158,11 @@ public class Shooter extends SubsystemBase{
     }
 
     public void setShooterRPM(double rpm) {
-        if (Double.compare(rpm, 0d) == 0) {
-            this.m_shooterMotor.setControl(new DutyCycleOut(0d).withOverrideBrakeDurNeutral(false));
-        } else {
-            this.m_shooterMotor.setControl(new MotionMagicVelocityVoltage(rpm / 60d)
-                                            .withSlot(0)
-                                            .withEnableFOC(true)
-                                            .withOverrideBrakeDurNeutral(true)
-            );
-        }
+        this.m_shooterMotor.setControl(new MotionMagicVelocityVoltage(rpm / 60d)
+                                        .withSlot(0)
+                                        .withEnableFOC(true)
+                                        .withOverrideBrakeDurNeutral(true)
+        );
         this.targetRPM = rpm;
     }
 
@@ -180,6 +178,11 @@ public class Shooter extends SubsystemBase{
     public void setLowShotState() {
         this.setHoodAngle(lowAngle.getNumber());
         this.requestedRPM = lowRPM.getNumber();
+    }
+
+    public void setReverseRPM() {
+        this.requestedRPM = reverseRPM.getNumber();
+        this.setRequestedRPM();
     }
 
     public void resetHood() {

@@ -62,67 +62,7 @@ public class RobotContainer {
   private void configureBindings() {
     this.configureSwerveBindings();
     this.configureMechBindings();
-
-    // RobotModeTriggers.teleop().onTrue(
-    //   Commands.parallel(
-    //     shooter.normalizeHoodCommand(),
-    //     turret.normalizeTurretCommand()
-    //   )
-    // );
-
-    // mechstick.a().onTrue(
-    //   turret.normalizeTurretCommand()
-    // );
-
-    // mechstick.b().onTrue(
-    //   shooter.normalizeHoodCommand()
-    // );
-
-    // mechstick.x().onTrue(
-    //   intake.normalizePivotCommand()
-    // );
-
-    // mechstick.y().onTrue(
-    //   new InstantCommand(() -> shooter.setRequestedRPM(), shooter)
-    // ).onFalse(
-    //   new InstantCommand(() -> shooter.setShooterRPM(0), shooter)
-    // );
-
-    // mechstick.povUp().onTrue(
-    //   Commands.runOnce(
-    //     () -> {shooter.setFenderShotState(); turret.setTurretPosition(new Rotation2d());}, 
-    //     shooter, turret)
-    // );
-
-    // mechstick.povLeft().onTrue(
-    //   intake.setDeployPositionCommand()
-    // );
-
-    // mechstick.povRight().onTrue(
-    //   intake.setStowPositionCommand()
-    // );
-
-    // mechstick.leftBumper().onTrue(
-    //   Commands.runOnce(
-    //     () -> {index.startMainIndex(); index.startSecondaryIndex();}, index)
-    // );
-
-    // mechstick.rightBumper().onTrue(
-    //   Commands.runOnce(
-    //     () -> {index.stopMainIndex(); index.stopSecondaryIndex();}, index)
-    // );
-
-
-
-
-
-    ;
-    // mechstick.back().onTrue(intake.enableIntakeCommand());
-    // mechstick.start().onTrue(intake.disableIntakeCommand());
-
-    mechstick.a().onTrue(index.startMainIndexCommand());
-    mechstick.b().onTrue(index.stopMainIndexCommand());
-    mechstick.y().onTrue(intake.normalizePivotCommand());
+    this.configureSecondaryBindings();
 
     SmartDashboard.putNumber("autos/wait time", 6.5);
   }
@@ -148,13 +88,41 @@ public class RobotContainer {
     drivestick.b().onTrue(Commands.sequence(intake.disableIntakeCommand(), intake.setStowPositionCommand()));
 
     drivestick.x().onTrue(new InstantCommand(() -> {shooter.disableAutoAim(); turret.disableAutoAim(); shooter.setFenderShotState(); turret.setTurretPosition(new Rotation2d());}, shooter, turret));
-    drivestick.y().onTrue(new InstantCommand(() -> {shooter.disableAutoAim();turret.disableAutoAim(); shooter.setLowShotState(); turret.setTurretPosition(new Rotation2d());}, shooter, turret));
+    drivestick.y().onTrue(new InstantCommand(() -> {shooter.disableAutoAim(); turret.disableAutoAim(); shooter.setLowShotState(); turret.setTurretPosition(new Rotation2d());}, shooter, turret));
 
     drivestick.leftBumper().onTrue(new InstantCommand(() -> {shooter.enableAutoAim(); turret.enableAutoAim();}, shooter, turret));
     drivestick.rightBumper()
       .onTrue(index.accelerateMainIndexCommand())
       .onFalse(index.startMainIndexCommand());
     
+  }
+
+  private void configureSecondaryBindings() {
+    mechstick.back().and(mechstick.x()).onTrue((intake.normalizePivotCommand()));
+    mechstick.back().and(mechstick.y()).onTrue((turret.normalizeTurretCommand()));
+    mechstick.back().and(mechstick.b()).onTrue((shooter.normalizeHoodCommand()));
+    mechstick.back().and(mechstick.a()).onTrue(new InstantCommand(() -> {shooter.disableAutoAim(); turret.disableAutoAim();}));
+
+    mechstick.x().onTrue(index.startMainIndexCommand());
+    mechstick.y().onTrue(index.stopMainIndexCommand());
+    mechstick.a().onTrue(index.reverseMainIndexCommand());
+    mechstick.b().onTrue(index.reverseSecondaryIndexCommand());
+
+    mechstick.leftBumper().onTrue(Commands.sequence(intake.reverseIntakeCommand(), intake.setDeployPositionCommand()));
+    mechstick.rightBumper().onTrue(new InstantCommand(() -> shooter.setReverseRPM(), shooter));
+
+    mechstick.start().whileTrue(drivetrain.applyRequest(() -> brake));
+
+    mechstick.back().and(mechstick.start()).onTrue(
+      Commands.sequence(
+        new InstantCommand(() -> {shooter.disableAutoAim(); turret.disableAutoAim();}),
+        intake.disableIntakeCommand(),
+        intake.setStowPositionCommand(),
+        index.stopMainIndexCommand(),
+        index.stopSecondaryIndexCommand(),
+        new InstantCommand(() -> shooter.setShooterRPM(0), shooter)
+      )
+    );
   }
 
   private void configureSwerveBindings() {
@@ -213,15 +181,11 @@ public class RobotContainer {
     //   new InstantCommand(() -> drivetrain.setTargetHeadingDegrees(180), drivetrain)
     // );
 
-    // mechstick.x().whileTrue(drivetrain.applyRequest(() -> brake));
     // mechstick.b().whileTrue(drivetrain
     //     .applyRequest(() -> point.withModuleDirection(new Rotation2d(-drivestick.getLeftY(), -drivestick.getLeftX()))));
 
     drivestick.start().onTrue(drivetrain.resetHeadingCommand());
 
-    if (Utils.isSimulation()) {
-      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
-    }
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 

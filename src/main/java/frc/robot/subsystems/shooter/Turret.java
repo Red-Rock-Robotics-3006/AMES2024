@@ -43,7 +43,7 @@ public class Turret extends SubsystemBase{
             .withStatorCurrentLimit(120)
             .withStatorCurrentLimitEnable(true);
 
-    private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/turret-motion-accel", 40);
+    private SmartDashboardNumber kTurretAccel = new SmartDashboardNumber("turret/turret-motion-accel", 80);
     private SmartDashboardNumber kTurretVel = new SmartDashboardNumber("turret/turret-motion-velocity", 40);
 
     private SmartDashboardNumber turretKs = new SmartDashboardNumber("turret/ks", 0);
