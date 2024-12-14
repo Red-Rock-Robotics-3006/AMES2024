@@ -16,7 +16,7 @@ public class Localization {
     public static final Pose2d blueCliffPose = new Pose2d(15.468,5.604, new Rotation2d());
     public static final Pose2d turretOffset = new Pose2d(0.177, 0.190, new Rotation2d());
 
-    private static int[] validIDs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    private static int[] validIDs = {1, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14};
     private static String[] limeLightNames = {"limelight-left", "limelight-right"};
     private static double[][] limeLightStdvs = {
         {0.8, 0.8, 9999},

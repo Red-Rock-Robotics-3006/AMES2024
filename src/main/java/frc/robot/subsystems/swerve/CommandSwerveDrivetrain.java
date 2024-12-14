@@ -66,8 +66,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
     /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
-    private final Rotation2d RedAlliancePerspectiveRotation = Rotation2d.fromDegrees(180);
-    // private final Rotation2d RedAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
+    // private final Rotation2d RedAlliancePerspectiveRotation = Rotation2d.fromDegrees(180);
+    private final Rotation2d RedAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
 
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean hasAppliedOperatorPerspective = false;
@@ -153,7 +153,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     public void setSwerveRequest(SwerveRequest.FieldCentricFacingAngle request){
         this.angleRequest = request;
-        // this.angleRequest.ForwardReference = ForwardReference.RedAlliance;
+        this.angleRequest.ForwardReference = ForwardReference.RedAlliance;
         angleRequest.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
@@ -243,6 +243,25 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                     )
                 );
                 this.targetHeadingDegrees = 0;
+            }
+        );
+    }
+
+    public Command setPoseToLimelightCommand() {
+        return new InstantCommand(
+            () -> {
+        for (Localization.LimeLightPoseEstimateWrapper estimateWrapper : Localization.getPoseEstimates(this.getHeadingDegrees())) {
+            if (estimateWrapper.tiv) {
+                this.seedFieldRelative(
+                    new Pose2d(
+                        estimateWrapper.poseEstimate.pose.getX(),
+                        estimateWrapper.poseEstimate.pose.getY(),
+                        Rotation2d.fromDegrees(this.getHeadingDegrees())
+                    )
+                );
+                break;
+            }
+        }
             }
         );
     }

@@ -125,6 +125,25 @@ public class RobotContainer {
         new InstantCommand(() -> shooter.setShooterRPM(0), shooter)
       )
     );
+
+    mechstick.povUp().onTrue(
+      Commands.runOnce(shooter::increaseFenderAngle, shooter)
+    );
+
+      mechstick.povDown().onTrue(
+      Commands.runOnce(shooter::decreaseFenderAngle, shooter)
+    );
+
+    mechstick.povLeft().onTrue(
+      Commands.runOnce(shooter::decreaseFenderRPM)
+    );
+    mechstick.povRight().onTrue(
+      Commands.runOnce(shooter::increaseFenderRPM)
+    );
+
+    mechstick.rightStick().onTrue(
+      drivetrain.setPoseToLimelightCommand()
+    );
   }
 
   private void configureSwerveBindings() {
@@ -139,13 +158,13 @@ public class RobotContainer {
       drivetrain.applyRequest(
         () -> {
           if (!drivetrain.getUseHeadingPID() || Math.abs(drivestick.getRightX()) > drivetrain.getTurnDeadBand()) {
-            return drive.withVelocityX(-drivestick.getLeftY() * MaxSpeed)
-                        .withVelocityY(-drivestick.getLeftX() * MaxSpeed)
+            return drive.withVelocityX(-drivestick.getLeftX() * MaxSpeed)
+                        .withVelocityY(-drivestick.getLeftY() * MaxSpeed)
                         .withRotationalRate(-drivestick.getRightX() * MaxAngularRate);
           }
           else {
-            return driveFacingAngle.withVelocityX(-drivestick.getLeftY() * MaxSpeed)
-                  .withVelocityY(-drivestick.getLeftX() * MaxSpeed)
+            return driveFacingAngle.withVelocityX(-drivestick.getLeftX() * MaxSpeed)
+                  .withVelocityY(-drivestick.getLeftY() * MaxSpeed)
                   .withTargetDirection(Rotation2d.fromDegrees(drivetrain.getTargetHeadingDegrees()));
             
           }

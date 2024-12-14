@@ -73,8 +73,8 @@ public class Shooter extends SubsystemBase{
     private SmartDashboardNumber fenderAngle = new SmartDashboardNumber("fender shot angle", 50);
     private SmartDashboardNumber fenderRPM = new SmartDashboardNumber("fender shot rpm", 1500);
 
-    private SmartDashboardNumber lowAngle = new SmartDashboardNumber("low shot angle", 85);
-    private SmartDashboardNumber lowRPM = new SmartDashboardNumber("low shot rpm", 1000);
+    private SmartDashboardNumber lowAngle = new SmartDashboardNumber("low shot angle", 75);
+    private SmartDashboardNumber lowRPM = new SmartDashboardNumber("low shot rpm", 400);
 
     private SmartDashboardNumber reverseRPM = new SmartDashboardNumber("reverse shot rpm", -750);
 
@@ -198,6 +198,22 @@ public class Shooter extends SubsystemBase{
         this.m_hoodMotor.setControl(new DutyCycleOut(this.normalizeSpeed.getNumber()));
     }
 
+    public void increaseFenderRPM() {
+        this.fenderRPM.putNumber(this.fenderRPM.getNumber() + 100);
+    }
+
+    public void decreaseFenderRPM() {
+        this.fenderRPM.putNumber(this.fenderRPM.getNumber() - 100);
+    }
+
+    public void increaseFenderAngle() {
+        this.fenderAngle.putNumber(this.fenderAngle.getNumber() + 2.5);
+    }
+
+    public void decreaseFenderAngle() {
+        this.fenderAngle.putNumber(this.fenderAngle.getNumber() - 2.5);
+    }
+
     public void enableAutoAim() {
         this.autoAimEnabled = true;
     }
@@ -275,7 +291,11 @@ public class Shooter extends SubsystemBase{
         SmartDashboard.putBoolean("hood/hood-auto-aim-enabled", this.autoAimEnabled);
 
         SmartDashboard.putNumber("shooter/shooter-request-rpm", this.requestedRPM);
-
+        if (!this.onBlue) {
+            SmartDashboard.putNumber("distance to target", Localization.getDistanceToTargetRed());
+        } else {
+            SmartDashboard.putNumber("distance to target", Localization.getDistanceToTargetBlue());
+        }
         if (this.autoAimEnabled) {
             if (this.onBlue) this.aimToTargetBlue();
             else this.aimToTargetRed(); 
