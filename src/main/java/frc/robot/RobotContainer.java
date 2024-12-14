@@ -74,7 +74,7 @@ public class RobotContainer {
         shooter.normalizeHoodCommand(),
         turret.normalizeTurretCommand(),
         intake.normalizePivotCommand(),
-        new InstantCommand(() -> index.startMainIndex(), index)
+        index.startMainIndexCommand()
       )
     );
 
