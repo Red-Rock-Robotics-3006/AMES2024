@@ -11,6 +11,7 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -72,7 +73,8 @@ public class RobotContainer {
       Commands.parallel(
         shooter.normalizeHoodCommand(),
         turret.normalizeTurretCommand(),
-        intake.normalizePivotCommand()
+        intake.normalizePivotCommand(),
+        new InstantCommand(() -> index.startMainIndex(), index)
       )
     );
 
